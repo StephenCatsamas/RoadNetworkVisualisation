@@ -39,7 +39,7 @@ for root,dirs,files in os.walk(fp):
         fcur = fp+'\\'+file
         fout = op+'\\'+file[:-4] + '.csv'
         
-        with open(fout, 'a', newline='') as csvfile:
+        with open(fout, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=';',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
@@ -66,31 +66,23 @@ for root,dirs,files in os.walk(fp):
                 
                 if (child.tag == "way"):
                     for tag in child:
-                        
                         if (tag.get('k') == 'highway'):
-                        
                             for tog in child:
                                if(tog.get("ref") != None):
-                                highset.add(tog.get("ref")) 
-                                
-                            
-                            for chold in root:
-                                ats = chold.attrib
-                                id = ats.get("id")
-                                if (id in highset):
-                                    lat = ats.get("lat")
-                                    lon = ats.get("lon")
-                                    try:
-                                        latlst.append(float(lat))
-                                        lonlst.append(float(lon))
-                                    except TypeError:
-                                        pass
-
-                                    highset.remove(id)
-                                if(len(highset) == 0):
-                                    break
+                                NextId = tog.get("ref")
+                                                            
+                                for chold in root:
+                                    ats = chold.attrib
+                                    id = ats.get("id")
+                                    if (id == NextId):
+                                        lat = ats.get("lat")
+                                        lon = ats.get("lon")
+                                        try:
+                                            latlst.append(float(lat))
+                                            lonlst.append(float(lon))
+                                        except TypeError:
+                                            pass
                                     
                     segPlot(lonlst,latlst)
                     latlst = list()
                     lonlst = list()
-                    highset = set()

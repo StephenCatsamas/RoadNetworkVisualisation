@@ -2,10 +2,10 @@ import os
 import math
 import requests
 
-Nf = -37.5
-Sf = -38.2
-Ef =  145.4
-Wf =  144.5
+Nf = -37.8
+Sf = -37.9
+Ef =  145.0
+Wf =  144.9
 
 N = int(math.floor(10*Nf))
 S = int(math.floor(10*Sf))

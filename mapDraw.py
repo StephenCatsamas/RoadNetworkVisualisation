@@ -8,6 +8,9 @@ import numpy as np
 fp = "mapSeg"
 op = "mapIm"
 
+first = True
+
+
 for root,dirs,files in os.walk(fp):
     for file in files:
         fcur = fp+'\\'+file
@@ -19,6 +22,10 @@ for root,dirs,files in os.walk(fp):
         
         flat = int(file[Cia+1:Cib])/10
         flon = int(file[Cib+1:Cic])/10
+
+        if(first):
+            first = False
+            latscl = flat
 
         with open(fcur, 'r', newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter=';',
@@ -52,20 +59,24 @@ for root,dirs,files in os.walk(fp):
                     print(i)
                    
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(frameon=False)
 
         ax.set_ylim(flat, flat+.2)
         ax.set_xlim(flon, flon+.2)
+        
+ 
+        
         ax.set_axis_off()
-        ax.set_facecolor((0.1,0.1,0.1))
+        
+        fig.set_size_inches(1, 1)
 
+        
 
         coll = LineCollection(seg, linewidths= .1 ,linestyle='solid', colors = colours)
 
         ax.add_collection(coll)
-        ax.autoscale_view()
-        ax.set_aspect('equal')
-        plt.savefig(fout, dpi = 300, bbox_inches = 'tight', transparent=True)
+        ax.set_aspect(1/(math.cos(math.radians(latscl))))
+        plt.savefig(fout, dpi = 3000, bbox_inches = 'tight', pad_inches=0, transparent=True)
 
 
 
