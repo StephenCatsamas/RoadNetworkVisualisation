@@ -67,7 +67,7 @@ for root,dirs,files in os.walk(fp):
     outimg[:,:,3] = 1
     
     print(outimg.shape)
-    print(nx, " ", ny)
+    print(ny, " ", nx)
     idx = 0
     ni = 0
     nj = 0
@@ -88,7 +88,7 @@ for root,dirs,files in os.walk(fp):
         for i in range(y):
             for j in range(x):
                 for k in range(3):
-                    outimg[i+iost,j+jost,k] = imcur[i,j,k]*imcur[i,j,3] + outimg[i+iost,j+jost,k]*(1-imcur[i,j,3])
+                    outimg[i+iost,j+jost,k] = imcur[i,j,k]*imcur[i,j,3] + .1*(1-imcur[i,j,3])
                 
                 
 

@@ -7,7 +7,15 @@ import csv
 from multiprocessing import Pool
 
 fp = "mapStreet"
+fp = "maps"
 op = "mapSeg"
+
+if not os.path.exists(op):
+    os.makedirs(op)
+
+def idSort(enum):
+    return(int(enum[1]))
+
 
 def colour(minilon,minilat):
     Dlon = minilon[0] - minilon[1]
@@ -53,16 +61,19 @@ def segThread(file):
         ax.set_facecolor((0.1,0.1,0.1))
 
         i=0
-        latlst = list()
-        lonlst = list()
-        highset = set()
+
+
             
 
         for child in root:
             
+            
             i += 1
             if (i % 200 == 0):
                 print("Proscessor: ", os.getpid(), "||", i, "out of" , len(root))
+                
+            cidx = 1
+            nodeList = list()
             
             if (child.tag == "way"):
                 for tag in child:
@@ -70,23 +81,38 @@ def segThread(file):
                         for tog in child:
                            if(tog.get("ref") != None):
                             NextId = tog.get("ref")
-                                                        
-                            for chold in root:
+                            
+                            nodeList.append(NextId)
+                            
+                        idxNodeList = list(enumerate(nodeList)) 
+                            
+                        idxNodeList.sort(key = idSort)
+                        
+                        lnth = len(idxNodeList)
+
+                        latlst = [None] * lnth
+                        lonlst = [None] * lnth
+                        
+                        for key, NextId in idxNodeList:
+
+                            for idx, chold in enumerate(root[cidx:]): 
                                 ats = chold.attrib
                                 id = ats.get("id")
                                 if (id == NextId):
                                     lat = ats.get("lat")
                                     lon = ats.get("lon")
+                                    cidx += idx
+                                    
                                     try:
-                                        latlst.append(float(lat))
-                                        lonlst.append(float(lon))
+                                        latlst[key] = float(lat)
+                                        lonlst[key] = float(lon)
+                                      
                                     except TypeError:
                                         pass
-                                
+                                    break
+                        break        
                 segPlot(lonlst,latlst, writer)
-                latlst = list()
-                lonlst = list()
-
+     
 if __name__ == '__main__':
 
     for root,dirs,files in os.walk(fp):

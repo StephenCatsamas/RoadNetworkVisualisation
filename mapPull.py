@@ -2,6 +2,9 @@ import os
 import math
 import requests
 
+if not os.path.exists(maps):
+    os.makedirs(maps)
+
 Nf = -34.8
 Sf = -35.1
 Ef =  138.8

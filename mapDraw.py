@@ -8,8 +8,11 @@ import numpy as np
 fp = "mapSeg"
 op = "mapIm"
 
+if not os.path.exists(op):
+    os.makedirs(op)
+
 blk = 100
-stp = 2
+stp = 10
 
 first = True
 
@@ -59,7 +62,7 @@ for root,dirs,files in os.walk(fp):
               
 
                 if (i % 500 == 0):
-                    print(i)
+                    print("Proscessor: ", os.getpid(), "||", i)
                    
 
         fig, ax = plt.subplots(frameon=False)
@@ -79,7 +82,7 @@ for root,dirs,files in os.walk(fp):
 
         ax.add_collection(coll)
         ax.set_aspect(1/(math.cos(math.radians(latscl))))
-        plt.savefig(fout, dpi = 300, bbox_inches = 'tight', pad_inches=0, transparent=True)
+        plt.savefig(fout, dpi = 1200, bbox_inches = 'tight', pad_inches=0, transparent=True)
         plt.close()
 
 
