@@ -1,3 +1,4 @@
+import args
 import os
 import math
 import matplotlib.pyplot as plt
@@ -11,12 +12,6 @@ op = "mapIm"
 if not os.path.exists(op):
     os.makedirs(op)
 
-blk = 100
-stp = 10
-
-first = True
-
-
 for root,dirs,files in os.walk(fp):
     for file in files:
         fcur = fp+'\\'+file
@@ -26,12 +21,8 @@ for root,dirs,files in os.walk(fp):
         Cib = file.find("_", Cia+1)
         Cic = file.find(".", Cib)
         
-        flat = int(file[Cia+1:Cib])/blk
-        flon = int(file[Cib+1:Cic])/blk
-
-        if(first):
-            first = False
-            latscl = flat
+        flat = int(file[Cia+1:Cib])/args.blk
+        flon = int(file[Cib+1:Cic])/args.blk
 
         with open(fcur, 'r', newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter=';',
@@ -67,8 +58,8 @@ for root,dirs,files in os.walk(fp):
 
         fig, ax = plt.subplots(frameon=False)
 
-        ax.set_ylim(flat, flat+(stp/blk))
-        ax.set_xlim(flon, flon+(stp/blk))
+        ax.set_ylim(flat, flat+(args.stp/args.blk))
+        ax.set_xlim(flon, flon+(args.stp/args.blk))
         
  
         
@@ -81,8 +72,8 @@ for root,dirs,files in os.walk(fp):
         coll = LineCollection(seg, linewidths= .1 ,linestyle='solid', colors = colours)
 
         ax.add_collection(coll)
-        ax.set_aspect(1/(math.cos(math.radians(latscl))))
-        plt.savefig(fout, dpi = 1200, bbox_inches = 'tight', pad_inches=0, transparent=True)
+        ax.set_aspect(1/(math.cos(math.radians(args.Nf))))
+        plt.savefig(fout, dpi = args.res, bbox_inches = 'tight', pad_inches=0, transparent=True)
         plt.close()
 
 

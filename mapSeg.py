@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import csv
 from multiprocessing import Pool
 
-fp = "mapStreet"
 fp = "maps"
+fp = "mapStreet"
 op = "mapSeg"
 
 if not os.path.exists(op):
@@ -95,7 +95,7 @@ def segThread(file):
                         
                         for key, NextId in idxNodeList:
 
-                            for idx, chold in enumerate(root[cidx:]): 
+                            for idx, chold in enumerate(root[cidx-1:]): 
                                 ats = chold.attrib
                                 id = ats.get("id")
                                 if (id == NextId):

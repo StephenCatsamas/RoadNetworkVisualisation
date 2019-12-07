@@ -1,3 +1,4 @@
+import args
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,13 +7,6 @@ import matplotlib.image as mpimg
 
 fp = "mapIm"
 op = "final.png"
-
-N = 0
-S = 0
-E = 0
-W = 0
-
-blk = 100
 
 first = True
 
@@ -28,28 +22,15 @@ for root,dirs,files in os.walk(fp):
         Cib = file.find("_", Cia+1)
         Cic = file.find(".", Cib)
         
-        flat = int(file[Cia+1:Cib])/blk
-        flon = int(file[Cib+1:Cic])/blk
+        flat = int(file[Cia+1:Cib])/args.blk
+        flon = int(file[Cib+1:Cic])/args.blk
         
         if (first):
             first = False
-            N = flat
-            S = flat
-            E = flon
-            W = flon
             
             Metaimg = mpimg.imread(fcur)
             y = Metaimg.shape[0]
-            x = Metaimg.shape[1]
-        
-        if (N < flat):
-            N = flat
-        if (S > flat):
-            S = flat
-        if (E < flon):
-            E = flon 
-        if (W > flon):
-            W = flat               
+            x = Metaimg.shape[1]             
         
         if(not (flat in lats)):
             lats.append(flat)
