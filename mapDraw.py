@@ -8,6 +8,9 @@ import numpy as np
 fp = "mapSeg"
 op = "mapIm"
 
+blk = 100
+stp = 2
+
 first = True
 
 
@@ -20,8 +23,8 @@ for root,dirs,files in os.walk(fp):
         Cib = file.find("_", Cia+1)
         Cic = file.find(".", Cib)
         
-        flat = int(file[Cia+1:Cib])/10
-        flon = int(file[Cib+1:Cic])/10
+        flat = int(file[Cia+1:Cib])/blk
+        flon = int(file[Cib+1:Cic])/blk
 
         if(first):
             first = False
@@ -61,8 +64,8 @@ for root,dirs,files in os.walk(fp):
 
         fig, ax = plt.subplots(frameon=False)
 
-        ax.set_ylim(flat, flat+.2)
-        ax.set_xlim(flon, flon+.2)
+        ax.set_ylim(flat, flat+(stp/blk))
+        ax.set_xlim(flon, flon+(stp/blk))
         
  
         
@@ -76,7 +79,7 @@ for root,dirs,files in os.walk(fp):
 
         ax.add_collection(coll)
         ax.set_aspect(1/(math.cos(math.radians(latscl))))
-        plt.savefig(fout, dpi = 3000, bbox_inches = 'tight', pad_inches=0, transparent=True)
-
+        plt.savefig(fout, dpi = 300, bbox_inches = 'tight', pad_inches=0, transparent=True)
+        plt.close()
 
 

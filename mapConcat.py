@@ -12,6 +12,7 @@ S = 0
 E = 0
 W = 0
 
+blk = 100
 
 first = True
 
@@ -27,8 +28,8 @@ for root,dirs,files in os.walk(fp):
         Cib = file.find("_", Cia+1)
         Cic = file.find(".", Cib)
         
-        flat = int(file[Cia+1:Cib])/10
-        flon = int(file[Cib+1:Cic])/10
+        flat = int(file[Cia+1:Cib])/blk
+        flon = int(file[Cib+1:Cic])/blk
         
         if (first):
             first = False

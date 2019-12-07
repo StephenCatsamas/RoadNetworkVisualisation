@@ -2,28 +2,31 @@ import os
 import math
 import requests
 
-Nf = -37.8
-Sf = -37.9
-Ef =  145.0
-Wf =  144.9
+Nf = -34.8
+Sf = -35.1
+Ef =  138.8
+Wf =  138.4
 
-N = int(math.floor(10*Nf))
-S = int(math.floor(10*Sf))
-E = int(math.floor(10*Ef))
-W = int(math.floor(10*Wf))
+blk = 100
+stp = 10
 
-for lat in range(S,N,2):
-    for lon in range(W,E,2):
+N = int(math.floor(blk*Nf))
+S = int(math.floor(blk*Sf))
+E = int(math.floor(blk*Ef))
+W = int(math.floor(blk*Wf))
+
+for lat in range(S,N,stp):
+    for lon in range(W,E,stp):
         get = False
         while(get == False):
             Qstr = "https://overpass-api.de/api/interpreter?data=[bbox:"
-            Qstr += str(lat/10)
+            Qstr += str(lat/blk)
             Qstr += ','
-            Qstr += str(lon/10)
+            Qstr += str(lon/blk)
             Qstr += ','
-            Qstr += str(lat/10 + 0.2)
+            Qstr += str((lat+stp)/blk)
             Qstr += ','
-            Qstr += str(lon/10 + 0.2)
+            Qstr += str((lon+stp)/blk)
             Qstr += '];way[highway];(._;>;);out;'
 
             print(Qstr)
@@ -43,7 +46,8 @@ for lat in range(S,N,2):
                 
             statinfo = os.stat(Ostr)
             print(statinfo.st_size)           
-            if(statinfo.st_size > 2000):
-                get = True
+            if(statinfo.st_size > 2000 or statinfo.st_size < 1500):
+                if(not(statinfo.st_size in range(700,750))):
+                    get = True
                 
         
