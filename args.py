@@ -1,14 +1,44 @@
 import math
 
-Nf = -34.8
-Sf = -35.1
-Ef =  138.8
-Wf =  138.4
+Nf = -37.80
+Sf = -37.82
+Ef =  144.98
+Wf =  144.94
 
 blk = 100
-stp = 10
+stp = 1
 
-res = 100
+res = 300
+
+mapPullOutPath = "maps"
+
+mapStreetInPath = "maps"
+mapStreetOutPath = "mapStreet"
+
+mapSegInPath = "mapStreet"
+mapSegOutPath = "mapSeg"
+
+mapDrawInPath = "mapSeg"
+mapDrawOutPath = "mapIm"
+
+mapGreyPath = "mapIm"
+
+mapConcatInPath = "mapIm"
+mapConcatOutPath = "afinal.png"
+
+#################################################################################
+folders = list()
+
+folders.append(mapPullOutPath)
+folders.append(mapStreetInPath)
+folders.append(mapStreetOutPath)
+folders.append(mapSegInPath)
+folders.append(mapSegOutPath)
+folders.append(mapDrawInPath)
+folders.append(mapDrawOutPath)
+folders.append(mapGreyPath)
+folders.append(mapConcatInPath)
+
 
 N = int(math.floor(blk*Nf))
 S = int(math.floor(blk*Sf))

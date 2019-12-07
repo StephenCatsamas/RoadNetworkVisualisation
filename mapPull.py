@@ -1,37 +1,25 @@
+import args
 import os
 import math
 import requests
 
-if not os.path.exists(maps):
-    os.makedirs(maps)
 
-Nf = -34.8
-Sf = -35.1
-Ef =  138.8
-Wf =  138.4
+def pull():
 
-blk = 100
-stp = 10
-
-N = int(math.floor(blk*Nf))
-S = int(math.floor(blk*Sf))
-E = int(math.floor(blk*Ef))
-W = int(math.floor(blk*Wf))
-
-def Pull(Args):
-
-    for lat in range(S,N,stp):
-        for lon in range(W,E,stp):
+    for lat in range(args.S,args.N,args.stp):
+        for lon in range(args.W,args.E,args.stp):
             get = False
             while(get == False):
+                print('asd')
+            
                 Qstr = "https://overpass-api.de/api/interpreter?data=[bbox:"
-                Qstr += str(lat/blk)
+                Qstr += str(lat/args.blk)
                 Qstr += ','
-                Qstr += str(lon/blk)
+                Qstr += str(lon/args.blk)
                 Qstr += ','
-                Qstr += str((lat+stp)/blk)
+                Qstr += str((lat+args.stp)/args.blk)
                 Qstr += ','
-                Qstr += str((lon+stp)/blk)
+                Qstr += str((lon+args.stp)/args.blk)
                 Qstr += '];way[highway];(._;>;);out;'
 
                 print(Qstr)
@@ -40,7 +28,8 @@ def Pull(Args):
 
                 pdf_url = r.url
                 
-                Ostr = "maps\map_"
+                Ostr = args.mapPullOutPath
+                Ostr += "\map_"
                 Ostr += str(lat)
                 Ostr += '_'
                 Ostr += str(lon)
@@ -51,8 +40,7 @@ def Pull(Args):
                     
                 statinfo = os.stat(Ostr)
                 print(statinfo.st_size)           
-                if(statinfo.st_size > 2000 or statinfo.st_size < 1500):
-                    if(not(statinfo.st_size in range(700,750))):
-                        get = True
+                if(not(statinfo.st_size in range(700,750))):
+                    get = True
                 
         

@@ -1,21 +1,12 @@
+import args
 import os
 import math
 import colorsys
 import lxml.etree as ET
-import matplotlib.pyplot as plt
 import csv
-from multiprocessing import Pool
-
-fp = "maps"
-fp = "mapStreet"
-op = "mapSeg"
-
-if not os.path.exists(op):
-    os.makedirs(op)
 
 def idSort(enum):
     return(int(enum[1]))
-
 
 def colour(minilon,minilat):
     Dlon = minilon[0] - minilon[1]
@@ -44,8 +35,8 @@ def segPlot(lonlst,latlst, writer):
             writer.writerow([minilon,minilat,col])
 
 def segThread(file):
-    fcur = fp+'\\'+file
-    fout = op+'\\'+file[:-4] + '.csv'
+    fcur = args.mapSegInPath+'\\'+file
+    fout = args.mapSegOutPath+'\\' +file[:-4] + '.csv'
     
     with open(fout, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=';',
@@ -55,19 +46,10 @@ def segThread(file):
 
         root = myMap.getroot()
 
-        plt.figure()
-        ax = plt.axes()
-
-        ax.set_facecolor((0.1,0.1,0.1))
-
         i=0
-
-
-            
-
+   
         for child in root:
-            
-            
+     
             i += 1
             if (i % 200 == 0):
                 print("Proscessor: ", os.getpid(), "||", i, "out of" , len(root))
@@ -113,9 +95,4 @@ def segThread(file):
                         break        
                 segPlot(lonlst,latlst, writer)
      
-if __name__ == '__main__':
-
-    for root,dirs,files in os.walk(fp):
-        with Pool(4) as p:
-            p.map(segThread, files)
         

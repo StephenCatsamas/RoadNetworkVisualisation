@@ -6,16 +6,9 @@ from matplotlib.collections import LineCollection
 import csv
 import numpy as np
 
-fp = "mapSeg"
-op = "mapIm"
-
-if not os.path.exists(op):
-    os.makedirs(op)
-
-for root,dirs,files in os.walk(fp):
-    for file in files:
-        fcur = fp+'\\'+file
-        fout = op+'\\'+file[:-4] + '.png'
+def draw(file):
+        fcur = args.mapDrawInPath+'\\'+file
+        fout = args.mapDrawOutPath+'\\'+file[:-4] + '.png'
 
         Cia = file.find("_")
         Cib = file.find("_", Cia+1)
@@ -31,9 +24,6 @@ for root,dirs,files in os.walk(fp):
             seg = np.zeros((0,2,2))
             ln = np.zeros((2,2))
             colours = np.zeros((0,3))
-
-
-
 
             i = 0
             for row in reader:
@@ -53,21 +43,16 @@ for root,dirs,files in os.walk(fp):
               
 
                 if (i % 500 == 0):
-                    print("Proscessor: ", os.getpid(), "||", i)
-                   
+                    print("Proscessor: ", os.getpid(), "||", i)        
 
         fig, ax = plt.subplots(frameon=False)
 
         ax.set_ylim(flat, flat+(args.stp/args.blk))
         ax.set_xlim(flon, flon+(args.stp/args.blk))
-        
- 
-        
+
         ax.set_axis_off()
         
         fig.set_size_inches(1, 1)
-
-        
 
         coll = LineCollection(seg, linewidths= .1 ,linestyle='solid', colors = colours)
 
