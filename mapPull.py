@@ -42,9 +42,7 @@ def pull():
                             f.write(r.content)
                     except requests.exceptions.ConnectionError:
                         time.sleep(20)
-                    
-                    #pdf_url = r.url
-                    
+                                       
                     
                     try:
                         statinfo = os.stat(Ostr)

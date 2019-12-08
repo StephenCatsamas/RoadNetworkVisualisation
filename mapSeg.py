@@ -41,99 +41,53 @@ def segThread(file):
     fcur = args.mapSegInPath+'\\'+file
     fout = args.mapSegOutPath+'\\' +file[:-4] + '.csv'
     
-    # if (not (os.path.isfile(fout))):
+    if (not (os.path.isfile(fout))):
     
-    with open(fout, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile, delimiter=';',
-                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        with open(fout, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=';',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-        myMap = ET.parse(fcur)
-        root = myMap.getroot()
+            myMap = ET.parse(fcur)
+            root = myMap.getroot()
 
-        nodeKeys = list()
-        
-        for child in root:
-            if child.tag == 'node':
-                nodeKeys.append(child.get('id'))
-
-        nodeDict = dict.fromkeys(nodeKeys)
-        
-        for child in root:
-            if child.tag == 'node':
-                nodeDict[child.get('id')] = (child.get('lat'), child.get('lon'))
-        
-        i=0
-        
-        for child in root:
-        
-            i += 1
-            if (i % 1000 == 0):
-                print("Proscessor: ", os.getpid(), "||", i, "out of" , len(root))
-        
-            if child.tag == 'way':
+            nodeKeys = list()
             
-                latlst = list()
-                lonlst = list()
-                
-                for tag in child:
-                    if tag.get("ref") != None:
-                        id = tag.get("ref")
-                        
-                        coord = nodeDict[id]
+            for child in root:
+                if child.tag == 'node':
+                    nodeKeys.append(child.get('id'))
 
-
-                        latlst.append(float(coord[0]))
-                        lonlst.append(float(coord[1]))
+            nodeDict = dict.fromkeys(nodeKeys)
+            
+            for child in root:
+                if child.tag == 'node':
+                    nodeDict[child.get('id')] = (child.get('lat'), child.get('lon'))
+            
+            i=0
+            
+            for child in root:
+            
+                i += 1
+                if (i % 1000 == 0):
+                    print("Proscessor: ", os.getpid(), "||", i, "out of" , len(root))
+            
+                if child.tag == 'way':
                 
-                
-                segPlot(lonlst,latlst, writer)
-                
-                
-                
-                
-            # for child in root:
-         
-                
+                    latlst = list()
+                    lonlst = list()
                     
-                # cidx = 1
-                # nodeList = list()
-                
-                # if (child.tag == "way"):
-                    # for tag in child:
-                        # if (tag.get('k') == 'highway'):
-                            # for tog in child:
-                               # if(tog.get("ref") != None):
-                                # NextId = tog.get("ref")
-                                
-                                # nodeList.append(NextId)
-                                
-                            # idxNodeList = list(enumerate(nodeList)) 
-                                
-                            # idxNodeList.sort(key = idSort)
+                    for tag in child:
+                        if tag.get("ref") != None:
+                            id = tag.get("ref")
                             
-                            # lnth = len(idxNodeList)
+                            coord = nodeDict[id]
 
-                            # latlst = [None] * lnth
-                            # lonlst = [None] * lnth
-                            
-                            # for key, NextId in idxNodeList:
 
-                                # for idx, chold in enumerate(root[cidx-1:]): 
-                                    # ats = chold.attrib
-                                    # id = ats.get("id")
-                                    # if (id == NextId):
-                                        # lat = ats.get("lat")
-                                        # lon = ats.get("lon")
-                                        # cidx += idx
-                                        
-                                        # try:
-                                            # latlst[key] = float(lat)
-                                            # lonlst[key] = float(lon)
-                                          
-                                        # except TypeError:
-                                            # pass
-                                        # break
-                            # break        
+                            latlst.append(float(coord[0]))
+                            lonlst.append(float(coord[1]))
+                    
+                    
+                    segPlot(lonlst,latlst, writer)
+       
                     
          
         
