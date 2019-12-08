@@ -1,12 +1,12 @@
 import math
 
-Nf = -37.80
-Sf = -37.82
-Ef =  144.98
-Wf =  144.94
+Nf =  51.70
+Sf =  51.25
+Ef =  0.30
+Wf =  -0.55
 
 blk = 100
-stp = 1
+stp = 3
 
 res = 300
 
@@ -15,7 +15,7 @@ mapPullOutPath = "maps"
 mapStreetInPath = "maps"
 mapStreetOutPath = "mapStreet"
 
-mapSegInPath = "mapStreet"
+mapSegInPath = "maps"
 mapSegOutPath = "mapSeg"
 
 mapDrawInPath = "mapSeg"

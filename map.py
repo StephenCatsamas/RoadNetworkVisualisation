@@ -17,33 +17,34 @@ for folder in args.folders:
 
 if __name__ == '__main__':
 
-  #  mapPull.pull()
+    mapPull.pull()
         
     for root,dirs,files in os.walk(args.mapStreetInPath):
-        with Pool(4) as p:
-            p.map(mapStreet.cullStreets, files)
-    p.join()
+        with Pool(8) as p:
+            p.map(mapStreet.cullStreets, files,1)
+    
     p.close()
+    p.join()
 
     for root,dirs,files in os.walk(args.mapSegInPath):
-        with Pool(4) as p:
-            p.map(mapSeg.segThread, files)
-    p.join()
+        with Pool(8) as p:
+            p.map(mapSeg.segThread, files,1)
     p.close()
+    p.join()
 
     for root,dirs,files in os.walk(args.mapDrawInPath):
-        with Pool(4) as p:
-            p.map(mapDraw.draw, files)
+        with Pool(8) as p:
+            p.map(mapDraw.draw, files,1)
 
-    p.join()
     p.close()
+    p.join()
 
     for root,dirs,files in os.walk(args.mapGreyPath):
-        with Pool(4) as p:
+        with Pool(8) as p:
             p.map(mapGrey.grey, files)
     
-    p.join()
     p.close()
+    p.join()
      
     mapConcat.concat()
     

@@ -1,9 +1,12 @@
 import args
+import os
 import lxml.etree as ET
 
 
 def cullStreets(file):
     fcur = args.mapStreetInPath+'\\'+file
+
+    print("Proscessor: ", os.getpid(), "||", fcur)
 
     myMap = ET.parse(fcur)
 

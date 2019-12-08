@@ -38,61 +38,63 @@ def segThread(file):
     fcur = args.mapSegInPath+'\\'+file
     fout = args.mapSegOutPath+'\\' +file[:-4] + '.csv'
     
-    with open(fout, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile, delimiter=';',
-                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    if (not (os.path.isfile(fout))):
+    
+        with open(fout, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=';',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-        myMap = ET.parse(fcur)
+            myMap = ET.parse(fcur)
 
-        root = myMap.getroot()
+            root = myMap.getroot()
 
-        i=0
-   
-        for child in root:
-     
-            i += 1
-            if (i % 200 == 0):
-                print("Proscessor: ", os.getpid(), "||", i, "out of" , len(root))
+            i=0
+       
+            for child in root:
+         
+                i += 1
+                if (i % 200 == 0):
+                    print("Proscessor: ", os.getpid(), "||", i, "out of" , len(root))
+                    
+                cidx = 1
+                nodeList = list()
                 
-            cidx = 1
-            nodeList = list()
-            
-            if (child.tag == "way"):
-                for tag in child:
-                    if (tag.get('k') == 'highway'):
-                        for tog in child:
-                           if(tog.get("ref") != None):
-                            NextId = tog.get("ref")
+                if (child.tag == "way"):
+                    for tag in child:
+                        if (tag.get('k') == 'highway'):
+                            for tog in child:
+                               if(tog.get("ref") != None):
+                                NextId = tog.get("ref")
+                                
+                                nodeList.append(NextId)
+                                
+                            idxNodeList = list(enumerate(nodeList)) 
+                                
+                            idxNodeList.sort(key = idSort)
                             
-                            nodeList.append(NextId)
-                            
-                        idxNodeList = list(enumerate(nodeList)) 
-                            
-                        idxNodeList.sort(key = idSort)
-                        
-                        lnth = len(idxNodeList)
+                            lnth = len(idxNodeList)
 
-                        latlst = [None] * lnth
-                        lonlst = [None] * lnth
-                        
-                        for key, NextId in idxNodeList:
+                            latlst = [None] * lnth
+                            lonlst = [None] * lnth
+                            
+                            for key, NextId in idxNodeList:
 
-                            for idx, chold in enumerate(root[cidx-1:]): 
-                                ats = chold.attrib
-                                id = ats.get("id")
-                                if (id == NextId):
-                                    lat = ats.get("lat")
-                                    lon = ats.get("lon")
-                                    cidx += idx
-                                    
-                                    try:
-                                        latlst[key] = float(lat)
-                                        lonlst[key] = float(lon)
-                                      
-                                    except TypeError:
-                                        pass
-                                    break
-                        break        
-                segPlot(lonlst,latlst, writer)
-     
+                                for idx, chold in enumerate(root[cidx-1:]): 
+                                    ats = chold.attrib
+                                    id = ats.get("id")
+                                    if (id == NextId):
+                                        lat = ats.get("lat")
+                                        lon = ats.get("lon")
+                                        cidx += idx
+                                        
+                                        try:
+                                            latlst[key] = float(lat)
+                                            lonlst[key] = float(lon)
+                                          
+                                        except TypeError:
+                                            pass
+                                        break
+                            break        
+                    segPlot(lonlst,latlst, writer)
+         
         
