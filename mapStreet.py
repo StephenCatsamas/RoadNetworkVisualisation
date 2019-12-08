@@ -10,38 +10,20 @@ def cullStreets(file):
 
     myMap = ET.parse(fcur)
 
-    root = myMap.getroot()
+    #root = myMap.getroot()
 
-    delset = set()
-    keepset = set()
+    # nodeIndx = 0
+    # nodeMap = list()
 
-    for child in root:
-        keep = 0
+    # for child in root:
+        # if child.tag == 'node':
+            # child.set("id", str(nodeIndx))
+            # nodeIndx += 1
         
-        for tag in child:
-            if (tag.get('k') == 'highway'): 
-                if ((tag.get('v') == 'motorway') or (tag.get('v') == 'trunk') or (tag.get('v') == 'primary') or (tag.get('v') == 'secondary') or (tag.get('v') == 'tertiary')):
-                    keep = 1
-       
-                
-        if (keep == 1): 
-            ats = child.attrib
-            keepset.add(ats.get("id"))
-            
-            for tag in child:
-                if(tag.get("ref") != None):
-                    keepset.add(tag.get("ref"))
+        # if child.tag == 'way':
+            # child.set("id", str(wayIndx))
+            # wayIndx += 1
 
-    for child in root: 
-        ats = child.attrib
-        id = ats.get("id")
-        
-        if (not(id in keepset)):
-            try:
-                root.remove(child)
-            except ValueError:
-                pass
-            
     myMap.write(args.mapStreetOutPath+'\\'+file)
 
 

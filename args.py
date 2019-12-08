@@ -15,7 +15,7 @@ mapPullOutPath = "maps"
 mapStreetInPath = "maps"
 mapStreetOutPath = "mapStreet"
 
-mapSegInPath = "maps"
+mapSegInPath = "mapStreet"
 mapSegOutPath = "mapSeg"
 
 mapDrawInPath = "mapSeg"

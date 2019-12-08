@@ -18,7 +18,7 @@ for folder in args.folders:
 if __name__ == '__main__':
 
     mapPull.pull()
-        
+
     for root,dirs,files in os.walk(args.mapStreetInPath):
         with Pool(8) as p:
             p.map(mapStreet.cullStreets, files,1)
@@ -31,7 +31,7 @@ if __name__ == '__main__':
             p.map(mapSeg.segThread, files,1)
     p.close()
     p.join()
-
+    
     for root,dirs,files in os.walk(args.mapDrawInPath):
         with Pool(8) as p:
             p.map(mapDraw.draw, files,1)
