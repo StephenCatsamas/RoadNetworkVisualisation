@@ -1,9 +1,9 @@
 import math
 
-Nf =  49.10
-Sf =  48.60
-Ef =  2.70
-Wf =  1.90
+Nf =  56
+Sf =  55.5
+Ef =  38
+Wf =  37.3
 
 blk = 100
 stp = 10

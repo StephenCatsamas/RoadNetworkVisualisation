@@ -53,7 +53,11 @@ def draw(file):
                     seg = np.zeros((0,2,2))
                     ln = np.zeros((2,2))
                     colours = np.zeros((0,3))
-                
+            
+           
+            linecolls.append(LineCollection(seg, linewidths= .1 ,linestyle='solid', colors = colours))
+    
+            
         fig, ax = plt.subplots(frameon=False)
 
         ax.set_ylim(flat, flat+(args.stp/args.blk))

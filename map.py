@@ -39,6 +39,7 @@ if __name__ == '__main__':
     p.close()
     p.join()
     
+    
     for root,dirs,files in os.walk(args.mapGreyPath):
     
         mapGrey.makeGrey(files[1])
