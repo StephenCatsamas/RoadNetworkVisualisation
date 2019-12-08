@@ -2,10 +2,10 @@ import math
 
 new = True
 
-Nf =  42
-Sf =  41.8
-Ef =  12.7
-Wf =  12.3
+Nf =  49.4
+Sf =  49.0
+Ef =  -123.4
+Wf =  -122.6
 
 blk = 100
 stp = 20

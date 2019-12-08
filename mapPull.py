@@ -7,6 +7,11 @@ import time
 
 def pull():
 
+    if (args.S > args.N) or (args.W > args.E):
+        print('###############')
+        print("Bounds Inverted")
+        print('###############')
+
     for lat in range(args.S,args.N,args.stp):
         for lon in range(args.W,args.E,args.stp):
             get = False

@@ -47,8 +47,9 @@ if __name__ == '__main__':
     
     
     for root,dirs,files in os.walk(args.mapGreyPath):
-    
-        mapGrey.makeGrey(files[1])
+           
+        mapGrey.makeGrey(files[0])
+
 
         with Pool(8) as p:
             p.map(mapGrey.grey, files)
