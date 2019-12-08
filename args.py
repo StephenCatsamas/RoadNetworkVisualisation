@@ -1,14 +1,16 @@
 import math
 
-Nf =  56
-Sf =  55.5
-Ef =  38
-Wf =  37.3
+new = True
+
+Nf =  42
+Sf =  41.8
+Ef =  12.7
+Wf =  12.3
 
 blk = 100
-stp = 10
+stp = 20
 
-res = 1200
+res = 3000
 
 mapPullOutPath = "maps"
 

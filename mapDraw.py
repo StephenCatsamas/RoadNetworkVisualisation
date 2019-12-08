@@ -48,14 +48,14 @@ def draw(file):
                     print("Proscessor: ", os.getpid(), "||", i)        
                     
                 if (i % 12000 == 0):
-                    linecolls.append(LineCollection(seg, linewidths= .1 ,linestyle='solid', colors = colours))
+                    linecolls.append(LineCollection(seg, linewidths= .03 ,linestyle='solid', colors = colours))
                     
                     seg = np.zeros((0,2,2))
                     ln = np.zeros((2,2))
                     colours = np.zeros((0,3))
             
            
-            linecolls.append(LineCollection(seg, linewidths= .1 ,linestyle='solid', colors = colours))
+            linecolls.append(LineCollection(seg, linewidths= .03 ,linestyle='solid', colors = colours))
     
             
         fig, ax = plt.subplots(frameon=False)

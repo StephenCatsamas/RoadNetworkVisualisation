@@ -10,12 +10,18 @@ import os
 from multiprocessing import Pool
 
 
-for folder in args.folders:
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
-
 if __name__ == '__main__':
+
+    if args.new:
+        for folder in args.folders:
+            for root,dirs,files in os.walk(folder):
+                for file in files:
+                    print("Removing: ", root + '\\' + file)
+                    os.remove(root + '\\' + file)
+        
+    for folder in args.folders:
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
     mapPull.pull()
 
