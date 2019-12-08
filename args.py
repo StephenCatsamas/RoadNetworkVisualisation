@@ -1,14 +1,14 @@
 import math
 
-Nf =  41.00
-Sf =  40.55
-Ef =  -73.7
-Wf =  -74.15
+Nf =  49.10
+Sf =  48.60
+Ef =  2.70
+Wf =  1.90
 
 blk = 100
-stp = 3
+stp = 10
 
-res = 300
+res = 1200
 
 mapPullOutPath = "maps"
 
@@ -22,6 +22,7 @@ mapDrawInPath = "mapSeg"
 mapDrawOutPath = "mapIm"
 
 mapGreyPath = "mapIm"
+mapGrayMaskPath = "mapMask"
 
 mapConcatInPath = "mapIm"
 mapConcatOutPath = "afinal.png"
@@ -37,6 +38,7 @@ folders.append(mapSegOutPath)
 folders.append(mapDrawInPath)
 folders.append(mapDrawOutPath)
 folders.append(mapGreyPath)
+folders.append(mapGrayMaskPath)
 folders.append(mapConcatInPath)
 
 

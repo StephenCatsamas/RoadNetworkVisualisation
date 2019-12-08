@@ -16,6 +16,8 @@ def draw(file):
         
         flat = int(file[Cia+1:Cib])/args.blk
         flon = int(file[Cib+1:Cic])/args.blk
+        
+        linecolls = list()
 
         with open(fcur, 'r', newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter=';',
@@ -42,9 +44,16 @@ def draw(file):
                 colours = np.append(colours, [col], axis = 0)
               
 
-                if (i % 500 == 0):
+                if (i % 6000 == 0):
                     print("Proscessor: ", os.getpid(), "||", i)        
-
+                    
+                if (i % 12000 == 0):
+                    linecolls.append(LineCollection(seg, linewidths= .1 ,linestyle='solid', colors = colours))
+                    
+                    seg = np.zeros((0,2,2))
+                    ln = np.zeros((2,2))
+                    colours = np.zeros((0,3))
+                
         fig, ax = plt.subplots(frameon=False)
 
         ax.set_ylim(flat, flat+(args.stp/args.blk))
@@ -54,9 +63,9 @@ def draw(file):
         
         fig.set_size_inches(1, 1)
 
-        coll = LineCollection(seg, linewidths= .1 ,linestyle='solid', colors = colours)
-
-        ax.add_collection(coll)
+        for coll in linecolls:
+            ax.add_collection(coll)
+            
         ax.set_aspect(1/(math.cos(math.radians(args.Nf))))
         plt.savefig(fout, dpi = args.res, bbox_inches = 'tight', pad_inches=0, transparent=True)
         plt.close()

@@ -2,26 +2,27 @@ import args
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+from PIL import Image
 
+def makeGrey(file):
+    print("Grey Mask")
+    fcur = args.mapGreyPath+'\\'+file
+    fout = args.mapGrayMaskPath + '\\' + 'Grey.png'
+        
+    imcur = Image.open(fcur)
+      
+    outimg = Image.new('RGBA', imcur.size, (25,25,25))
+    outimg.save(fout)
 
 def grey(file):
     fcur = args.mapGreyPath+'\\'+file
-        
-    imcur = mpimg.imread(fcur)
-    
-    y = imcur.shape[0]
-    x = imcur.shape[1]  
-    
+    fgry = args.mapGrayMaskPath + '\\' + 'Grey.png'
+       
     print("Proscessor: ", os.getpid(), "||", fcur)
     
-    for i in range(y):
-        for j in range(x):
-            for k in range(3):
-                imcur[i,j,k] = imcur[i,j,k]*imcur[i,j,3] + .1*(1-imcur[i,j,3])
-                
-            imcur[i,j,3] = 1
-            
-    plt.imsave(fcur, imcur)
+    imcur = Image.open(fcur)
+    imgry = Image.open(fgry)
     
-    
+    imgry.paste(imcur, (0,0), imcur)
+    imgry.save(fcur)
+ 

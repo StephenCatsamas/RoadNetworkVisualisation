@@ -67,7 +67,7 @@ def segThread(file):
             for child in root:
             
                 i += 1
-                if (i % 1000 == 0):
+                if (i % 5000 == 0):
                     print("Proscessor: ", os.getpid(), "||", i, "out of" , len(root))
             
                 if child.tag == 'way':
