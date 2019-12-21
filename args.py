@@ -1,15 +1,20 @@
 import math
 
+##if true deletes old files when run
 new = False
 
+##coordinate bounging boxes in lat long degrees
 Nf =  -37.4
 Sf =  -38.6
 Ef =  145.6
 Wf =  144.2
 
+##decimal scale factor | have as many zeros as decimal places in bounding box coordinates
 blk = 100
+##download block size | units (deg/blk)
 stp = 20
 
+##final image reslution aritbrary units
 res = 2000
 
 mapPullOutPath = "maps"
@@ -27,6 +32,7 @@ mapGreyPath = "mapIm"
 mapGrayMaskPath = "mapMask"
 
 mapConcatInPath = "mapIm"
+##final image output
 mapConcatOutPath = "afinal.png"
 
 #################################################################################
