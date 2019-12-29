@@ -4,10 +4,10 @@ import math
 new = False
 
 ##coordinate bounging boxes in lat long degrees
-Nf =  -37.4
-Sf =  -38.6
-Ef =  145.6
-Wf =  144.2
+Nf =  41.2
+Sf =  40.4
+Ef =  -73.6
+Wf =  -74.2
 
 ##decimal scale factor | have as many zeros as decimal places in bounding box coordinates
 blk = 100
