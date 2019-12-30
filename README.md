@@ -12,3 +12,5 @@ Output will be a map image in file path specified
 
 
 Map data from openstreetmap.org
+
+![Sample Output](/Display.png)

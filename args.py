@@ -1,12 +1,12 @@
 import math
 
 ##if true deletes old files when run
-new = False
+new = True
 
 ##coordinate bounging boxes in lat long degrees
-Nf =  41.2
-Sf =  40.4
-Ef =  -73.6
+Nf =  45.8
+Sf =  45.2
+Ef =  -72.8
 Wf =  -74.2
 
 ##decimal scale factor | have as many zeros as decimal places in bounding box coordinates
