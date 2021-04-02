@@ -82,7 +82,7 @@ def colour(minilon,minilat,width):
         
     return colorsys.hsv_to_rgb(H,S,V)
 
-def segPlot(lonlst,latlst,width, writer):
+def seg_plot(lonlst,latlst,width, writer):
     for i,lat in enumerate(latlst):
         if i < len(latlst)-1:
         
@@ -96,7 +96,7 @@ def segPlot(lonlst,latlst,width, writer):
 
 
 
-def segThread(file):
+def seg_thread(file):
 
     fcur = args.mapSegInPath+'\\'+file
     fout = args.mapSegOutPath+'\\' +file[:-4] + '.csv'
@@ -148,4 +148,4 @@ def segThread(file):
                         if tag.get('k') == 'highway':
                             width = tag.get('v')
                     
-                    segPlot(lonlst,latlst,width, writer)
+                    seg_plot(lonlst,latlst,width, writer)

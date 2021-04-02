@@ -17,7 +17,7 @@ def grey(file):
     fout = args.mapGreyOutPath+'\\'+file
     fgry = args.mapGrayMaskPath + '\\' + 'Grey.png'
        
-    print("Greying: ", str(os.getpid()).zfill(6), "||", fcur)
+    print("Greying:", str(os.getpid()).zfill(6), "||", fcur)
     
     im_forground  = pyvips.Image.new_from_file(fcur)
     im_background = im_forground.new_from_image( [25,25,25])
@@ -31,6 +31,8 @@ def concat():
     ny = len(range(args.S,args.N,args.stp))
     nx = len(range(args.W,args.E,args.stp))
 
+    print("Concatinating")
+    
     for root,dirs,files in os.walk(args.mapConcatInPath):
        
        files.sort(key = order_key)

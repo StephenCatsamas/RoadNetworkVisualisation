@@ -65,8 +65,11 @@ def pull():
                         status_string = str(rs.content)
                         
                         t_wait_end = status_string.find("seconds") -1 
-                        t_wait_start = status_string.find("in",t_wait_end-5,t_wait_end) +3 
-                        t_wait = int(status_string[t_wait_start:t_wait_end])
+                        t_wait_start = status_string.find("in",t_wait_end-10,t_wait_end) +3 
+                        try:
+                            t_wait = int(status_string[t_wait_start:t_wait_end])
+                        except ValueError:
+                            t_wait = 0
                     
                         with open(Ostr, 'wb') as f:
                             f.write(r.content)

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 import csv
 import numpy as np
+import time
 
 def draw(file):
         fcur = args.mapDrawInPath+'\\'+file
@@ -23,11 +24,18 @@ def draw(file):
             reader = csv.reader(csvfile, delimiter=';',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
+            n_rows = sum(1 for row in reader)       
+            
+        with open(fcur, 'r', newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter=';',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
             seg = np.zeros((0,2,2))
             ln = np.zeros((2,2))
             colours = np.zeros((0,3))
 
             i = 0
+
             for row in reader:
                 i += 1
                 lon = eval(row[0])
@@ -45,17 +53,17 @@ def draw(file):
               
 
                 if (i % 6000 == 0):
-                    print("Drawing:", str(os.getpid()).zfill(6), "||", i)        
+                    print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
                     
                 if (i % 12000 == 0):
-                    linecolls.append(LineCollection(seg, linewidths= .02 ,linestyle='solid', colors = colours))
+                    linecolls.append(LineCollection(seg, linewidths= args.seg_width ,linestyle='solid', colors = colours))
                     
                     seg = np.zeros((0,2,2))
                     ln = np.zeros((2,2))
                     colours = np.zeros((0,3))
             
            
-            linecolls.append(LineCollection(seg, linewidths= .02 ,linestyle='solid', colors = colours))
+            linecolls.append(LineCollection(seg, linewidths= args.seg_width ,linestyle='solid', colors = colours))
     
             
         fig, ax = plt.subplots(frameon=False)

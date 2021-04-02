@@ -11,7 +11,7 @@ from multiprocessing import Pool
 
 if __name__ == '__main__':
 
-    if args.new:
+    if args.flush_map_cache:
         for folder in args.folders:
             for root,dirs,files in os.walk(folder):
                 for file in files:
@@ -23,22 +23,24 @@ if __name__ == '__main__':
             os.makedirs(folder)
 
     mapPull.pull()
-
-    for root,dirs,files in os.walk(args.mapStreetInPath):
-        with Pool(4) as p:
-            p.map(mapStreet.cullStreets, files,1)
     
-    p.close()
-    p.join()
+    if args.do_cull:
+        for root,dirs,files in os.walk(args.mapStreetInPath):
+            with Pool(args.threads) as p:
+                p.map(mapStreet.cull_streets, files,1)
+        
+        p.close()
+        p.join()
+        
 
     for root,dirs,files in os.walk(args.mapSegInPath):
-        with Pool(4) as p:
-            p.map(mapSeg.segThread, files,1)
+        with Pool(args.threads) as p:
+            p.map(mapSeg.seg_thread, files,1)
     p.close()
     p.join()
  
     for root,dirs,files in os.walk(args.mapDrawInPath):
-        with Pool(4) as p:
+        with Pool(args.threads) as p:
             p.map(mapDraw.draw, files,1)
 
     p.close()
@@ -46,7 +48,7 @@ if __name__ == '__main__':
     
     for root,dirs,files in os.walk(args.mapGreyInPath):
         
-        with Pool(4) as p:
+        with Pool(args.threads) as p:
             p.map(mapBitmap.grey, files)
     
     p.close()

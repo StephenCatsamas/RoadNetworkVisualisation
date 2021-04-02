@@ -3,7 +3,7 @@ import os
 import lxml.etree as ET
 
 
-def cullStreets(file):
+def cull_streets(file):
     fcur = args.mapStreetInPath+'\\'+file
     fout = args.mapStreetOutPath+'\\'+file
 
@@ -28,7 +28,6 @@ def cullStreets(file):
                 # wayIndx += 1
 
         myMap.write(fout)
-
 
 
         
