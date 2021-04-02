@@ -8,18 +8,18 @@ new = False
 force_seg = False
 
 ##coordinate bounging boxes in lat long degrees
-Nf =  -10.0
-Sf =  -45.0
-Ef =  155.0
-Wf =  112.0
+Nf =  -37.5
+Sf =  -38.5
+Ef =  145.5
+Wf =  144.5
 
 ##decimal scale factor | have as many zeros as decimal places in bounding box coordinates
 blk = 100
 ##download block size | units (deg/blk)
-stp = 500
+stp = 50
 
 ##final image reslution aritbrary units
-res = 4000
+res = 8000
 
 ##vips path
 ##vipsPath = "C:\Program Files\vips\vips-dev-8.10\bin"
@@ -35,10 +35,11 @@ mapSegOutPath = "mapSeg"
 mapDrawInPath = "mapSeg"
 mapDrawOutPath = "mapIm"
 
-mapGreyPath = "mapIm"
+mapGreyInPath = "mapIm"
+mapGreyOutPath = "mapGrey"
 mapGrayMaskPath = "mapMask"
 
-mapConcatInPath = "mapIm"
+mapConcatInPath = "mapGrey"
 ##final image output
 mapConcatOutPath = "afinal.png"
 
@@ -52,7 +53,8 @@ folders.append(mapSegInPath)
 folders.append(mapSegOutPath)
 folders.append(mapDrawInPath)
 folders.append(mapDrawOutPath)
-folders.append(mapGreyPath)
+folders.append(mapGreyInPath)
+folders.append(mapGreyOutPath)
 folders.append(mapGrayMaskPath)
 folders.append(mapConcatInPath)
 

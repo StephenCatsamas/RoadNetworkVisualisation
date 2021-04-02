@@ -128,7 +128,7 @@ def segThread(file):
             
                 i += 1
                 if (i % 5000 == 0):
-                    print("Segmenting: ", str(os.getpid()).zfill(6), "||", i, "out of" , len(root))
+                    print("Segmenting:", str(os.getpid()).zfill(6), "||", i, "of" , len(root))
             
                 if child.tag == 'way':
                 

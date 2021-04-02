@@ -45,7 +45,7 @@ def draw(file):
               
 
                 if (i % 6000 == 0):
-                    print("Drawing: ", str(os.getpid()).zfill(6), "||", i)        
+                    print("Drawing:", str(os.getpid()).zfill(6), "||", i)        
                     
                 if (i % 12000 == 0):
                     linecolls.append(LineCollection(seg, linewidths= .02 ,linestyle='solid', colors = colours))

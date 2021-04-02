@@ -6,11 +6,17 @@ import time
 
 
 def pull():
-
+    
     if (args.S > args.N) or (args.W > args.E):
         print('###############')
         print("Bounds Inverted")
         print('###############')
+
+    dlat = args.N - args.S
+    dlon = args.E - args.W
+    t_wait = 0
+
+    tiles = int(math.ceil(dlat/args.stp) * math.ceil(dlon/args.stp))
 
     for lat in range(args.S,args.N,args.stp):
         for lon in range(args.W,args.E,args.stp):
@@ -24,7 +30,6 @@ def pull():
             Ostr += '.osm'
             if (not (os.path.isfile(Ostr))):
                 while(get == False):
-                    
                     
                     
                     Qstr = "https://overpass-api.de/api/interpreter?data=[bbox:"
@@ -42,24 +47,41 @@ def pull():
                     Qstr += 'way[highway = primary];'
                     Qstr += 'way[highway = secondary];'
                     Qstr += ');(._;>;);out;'
-
-                    print(Qstr)
+                    
+                    
+                    tile_num = int(((lat-args.S)/args.stp) * math.ceil(dlon/args.stp) + ((lon-args.W)/args.stp))+1
+                    
+                    print("Fetching Tile: ", str(tile_num), "of", str(tiles))
+                    print("URL:", Qstr)
+                    
+                    
+                    if (t_wait > 0):
+                        print("Rate Limited:", str(t_wait), "s Pause")
+                        time.sleep(t_wait)
                     try:
+                        query_time = time.time()
                         r = requests.get(Qstr, allow_redirects=True)
+                        rs = requests.get("http://overpass-api.de/api/status")
+                        status_string = str(rs.content)
                         
-                        
+                        t_wait_end = status_string.find("seconds") -1 
+                        t_wait_start = status_string.find("in",t_wait_end-5,t_wait_end) +3 
+                        t_wait = int(status_string[t_wait_start:t_wait_end])
                     
                         with open(Ostr, 'wb') as f:
                             f.write(r.content)
                     except requests.exceptions.ConnectionError:
-                        time.sleep(20)
-                                       
+                        time.sleep(20)        
                     
                     try:
                         statinfo = os.stat(Ostr)
                         print(statinfo.st_size)           
                         if(not(statinfo.st_size in range(700,725))):
                             get = True
+                        elif(statinfo.st_size == 711):
+                             print('Rate Limited: 25s Pause')
+                             time.sleep(25)
+                             print('Continuing')
                     except OSError:
                         pass
                 
