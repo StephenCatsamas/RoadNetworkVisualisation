@@ -1,9 +1,11 @@
-from args import *
+import args as ag
 import os
 import lxml.etree as ET
 
 
 def cull_streets(file):
+    args = ag.ArgsContainer()
+
     fcur = args.mapStreetInPath+'\\'+file
     fout = args.mapStreetOutPath+'\\'+file
 

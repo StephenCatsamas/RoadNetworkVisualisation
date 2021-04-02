@@ -1,4 +1,4 @@
-from args import *
+import args as ag
 import os
 import math
 import colorsys
@@ -73,23 +73,25 @@ def width_colour(width):
     
     return (H/360),S,V
     
-def colour(minilon,minilat,width):
-
+def colour(args,minilon,minilat,width):
+    
     if args.colour_mode == 'angle':
         H,S,V = angle_colour(minilon,minilat)
     elif args.colour_mode == 'width':
         H,S,V = width_colour(width)
+    else:
+        raise ValueError("Invalid Colour Mode")
         
     return colorsys.hsv_to_rgb(H,S,V)
 
-def seg_plot(lonlst,latlst,width, writer):
+def seg_plot(args,lonlst,latlst,width, writer):
     for i,lat in enumerate(latlst):
         if i < len(latlst)-1:
         
             minilat = latlst[i:i+2]
             minilon = lonlst[i:i+2]
             
-            col = colour(minilon,minilat,width)
+            col = colour(args,minilon,minilat,width)
 
             writer.writerow([minilon,minilat,col])
 
@@ -97,6 +99,7 @@ def seg_plot(lonlst,latlst,width, writer):
 
 
 def seg_thread(file):
+    args = ag.ArgsContainer()
 
     fcur = args.mapSegInPath+'\\'+file
     fout = args.mapSegOutPath+'\\' +file[:-4] + '.csv'
@@ -148,4 +151,4 @@ def seg_thread(file):
                         if tag.get('k') == 'highway':
                             width = tag.get('v')
                     
-                    seg_plot(lonlst,latlst,width, writer)
+                    seg_plot(args,lonlst,latlst,width, writer)

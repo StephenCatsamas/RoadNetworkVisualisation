@@ -1,8 +1,9 @@
-from args import *
+import args as ag
 import os
 import pyvips
 
 def order_key(file):
+    args = ag.ArgsContainer()
     Cia = file.find("_")
     Cib = file.find("_", Cia+1)
     Cic = file.find(".", Cib)
@@ -13,6 +14,7 @@ def order_key(file):
     return -(flat+90)*1000000+(flon+180)
 
 def grey(file):
+    args = ag.ArgsContainer()
     fcur = args.mapGreyInPath+'\\'+file
     fout = args.mapGreyOutPath+'\\'+file
     fgry = args.mapGrayMaskPath + '\\' + 'Grey.png'
@@ -26,6 +28,7 @@ def grey(file):
     im_grey.write_to_file(fout)
 
 def concat():
+    args = ag.ArgsContainer()
     rowlist = list()
 
     ny = len(range(args.S,args.N,args.stp))

@@ -1,4 +1,4 @@
-from args import *
+import args as ag
 import os
 import math
 import matplotlib.pyplot as plt
@@ -8,6 +8,8 @@ import numpy as np
 import time
 
 def draw(file):
+        args = ag.ArgsContainer()
+        
         fcur = args.mapDrawInPath+'\\'+file
         fout = args.mapDrawOutPath+'\\'+file[:-4] + '.png'
 

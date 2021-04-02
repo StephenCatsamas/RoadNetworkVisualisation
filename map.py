@@ -1,4 +1,4 @@
-from args import *
+import args as ag
 import mapPull
 import mapStreet
 import mapSeg
@@ -6,12 +6,13 @@ import mapDraw
 import mapBitmap
 
 import os
+import sys
 from multiprocessing import Pool
 
 
-if __name__ == '__main__':
-    init_args()
-
+def run(): 
+    args = ag.ArgsContainer()
+        
     if args.flush_map_cache:
         for folder in args.folders:
             for root,dirs,files in os.walk(folder):
@@ -21,6 +22,7 @@ if __name__ == '__main__':
         
     for folder in args.folders:
         if not os.path.exists(folder):
+            print()
             os.makedirs(folder)
 
     mapPull.pull()
@@ -56,6 +58,11 @@ if __name__ == '__main__':
     p.join()
      
     mapBitmap.concat()
+    print('Finished')
+    
+if __name__ == '__main__':
+    run()
+    
     
     
     

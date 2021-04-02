@@ -1,4 +1,4 @@
-from args import *
+import args as ag
 import os
 import math
 import requests
@@ -6,6 +6,7 @@ import time
 
 
 def pull():
+    args = ag.ArgsContainer()
     
     if (args.S > args.N) or (args.W > args.E):
         print('###############')
@@ -14,7 +15,6 @@ def pull():
 
     dlat = args.N - args.S
     dlon = args.E - args.W
-    t_wait = 0
 
     tiles = int(math.ceil(dlat/args.stp) * math.ceil(dlon/args.stp))
 
@@ -51,25 +51,31 @@ def pull():
                     
                     tile_num = int(((lat-args.S)/args.stp) * math.ceil(dlon/args.stp) + ((lon-args.W)/args.stp))+1
                     
-                    print("Fetching Tile: ", str(tile_num), "of", str(tiles))
-                    print("URL:", Qstr)
                     
-                    
-                    if (t_wait > 0):
-                        print("Rate Limited:", str(t_wait), "s Pause")
-                        time.sleep(t_wait)
                     try:
-                        query_time = time.time()
-                        r = requests.get(Qstr, allow_redirects=True)
                         rs = requests.get("http://overpass-api.de/api/status")
                         status_string = str(rs.content)
-                        
+                            
                         t_wait_end = status_string.find("seconds") -1 
                         t_wait_start = status_string.find("in",t_wait_end-10,t_wait_end) +3 
                         try:
                             t_wait = int(status_string[t_wait_start:t_wait_end])
                         except ValueError:
                             t_wait = 0
+                            
+                        if (t_wait > 0):
+                            print("Rate Limited:", str(t_wait), "s Pause")
+                            time.sleep(t_wait)
+                    except requests.exceptions.ConnectionError:
+                        time.sleep(20)
+                    
+                    
+                    print("Fetching Tile: ", str(tile_num), "of", str(tiles))
+                    print("URL:", Qstr)
+                    
+                    try:
+                        query_time = time.time()
+                        r = requests.get(Qstr, allow_redirects=True)
                     
                         with open(Ostr, 'wb') as f:
                             f.write(r.content)
@@ -78,7 +84,7 @@ def pull():
                     
                     try:
                         statinfo = os.stat(Ostr)
-                        print(statinfo.st_size)           
+                        print("Tile Size:", statinfo.st_size, "Bytes")           
                         if(not(statinfo.st_size in range(700,725))):
                             get = True
                         elif(statinfo.st_size == 711):
@@ -88,4 +94,4 @@ def pull():
                     except OSError:
                         pass
                 
-        
+                    

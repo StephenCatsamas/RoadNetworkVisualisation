@@ -1,73 +1,82 @@
 import math
+import csv
 
-##colour mode 'angle', 'width'
-colour_mode = 'width'
+class ArgsContainer():
+    def __init__(self):
+        with open('args_lst.txt', 'r', newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter='=',
+                                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            
+            args_dict = {}
+            for row in reader:
+                if row == []:
+                    continue
+                if row[0][0] == '#':
+                    continue
+                args_dict[row[0].strip()] = row[1].strip()
 
-##if true deletes old files when run
-flush_map_cache = False
-do_cull = False
-force_seg = False
+        self.colour_mode = str(args_dict['colour_mode']).strip('"')
 
-##coordinate bounging boxes in lat long degrees #max resolution 0.001 degree
-Nf =  -37.500
-Sf =  -38.500
-Ef =  145.500
-Wf =  144.500
+        self.flush_map_cache = bool(args_dict['flush_map_cache'] == 'True')
+        self.do_cull = bool(args_dict['do_cull'] == 'True')
+        self.force_seg = bool(args_dict['force_seg'] == 'True')
 
-##download block size | units deg
-tile_size = 0.5
+        self.Nf =  float(args_dict['Nf'])
+        self.Sf =  float(args_dict['Sf'])
+        self.Ef =  float(args_dict['Ef'])
+        self.Wf =  float(args_dict['Wf'])
 
-##decimal scale factor | have as many zeros as decimal places in bounding box coordinates
-blk = 1000
-stp = int(round(tile_size,3)*blk)
+        self.tile_size = float(args_dict['tile_size'])
 
-##final image reslution aritbrary units
-res = 8000
-##plot sement width
-seg_width = 0.04
+        self.res = float(args_dict['res'])
 
-##muliprocessing threads
-threads = 4
+        self.seg_width = float(args_dict['seg_width'])
 
-mapPullOutPath = "maps"
+        self.threads = int(args_dict['threads'])
 
-mapStreetInPath = "maps"
-mapStreetOutPath = "mapStreet"
+        self.mapPullOutPath = str(args_dict['mapPullOutPath']).strip('"')
 
-mapSegInPath = "mapStreet"
-mapSegOutPath = "mapSeg"
+        self.mapStreetInPath = str(args_dict['mapStreetInPath']).strip('"')
+        self.mapStreetOutPath = str(args_dict['mapStreetOutPath']).strip('"')
 
-mapDrawInPath = "mapSeg"
-mapDrawOutPath = "mapIm"
+        self.mapSegInPath = str(args_dict['mapSegInPath']).strip('"')
+        self.mapSegOutPath = str(args_dict['mapSegOutPath']).strip('"')
 
-mapGreyInPath = "mapIm"
-mapGreyOutPath = "mapGrey"
-mapGrayMaskPath = "mapMask"
+        self.mapDrawInPath = str(args_dict['mapDrawInPath']).strip('"')
+        self.mapDrawOutPath = str(args_dict['mapDrawOutPath']).strip('"')
 
-mapConcatInPath = "mapGrey"
-##final image output
-mapConcatOutPath = "afinal.png"
+        self.mapGreyInPath = str(args_dict['mapGreyInPath']).strip('"')
+        self.mapGreyOutPath = str(args_dict['mapGreyOutPath']).strip('"')
+        self.mapGrayMaskPath = str(args_dict['mapGrayMaskPath']).strip('"')
 
-#################################################################################
-folders = list()
+        self.mapConcatInPath = str(args_dict['mapConcatInPath']).strip('"')
 
-folders.append(mapPullOutPath)
-folders.append(mapStreetInPath)
-folders.append(mapStreetOutPath)
-folders.append(mapSegInPath)
-folders.append(mapSegOutPath)
-folders.append(mapDrawInPath)
-folders.append(mapDrawOutPath)
-folders.append(mapGreyInPath)
-folders.append(mapGreyOutPath)
-folders.append(mapGrayMaskPath)
-folders.append(mapConcatInPath)
+        self.mapConcatOutPath = str(args_dict['mapConcatOutPath']).strip('"')
 
-if not do_cull:
-    mapSegInPath = mapStreetInPath
+        #################################################################################
+        self.blk = 1000
 
+        self.folders = list()
 
-N = int(math.floor(blk*round(Nf,3)))
-S = int(math.floor(blk*round(Sf,3)))
-E = int(math.floor(blk*round(Ef,3)))
-W = int(math.floor(blk*round(Wf,3)))
+        self.folders.append(self.mapPullOutPath)
+        self.folders.append(self.mapStreetInPath)
+        self.folders.append(self.mapStreetOutPath)
+        self.folders.append(self.mapSegInPath)
+        self.folders.append(self.mapSegOutPath)
+        self.folders.append(self.mapDrawInPath)
+        self.folders.append(self.mapDrawOutPath)
+        self.folders.append(self.mapGreyInPath)
+        self.folders.append(self.mapGreyOutPath)
+        self.folders.append(self.mapGrayMaskPath)
+        self.folders.append(self.mapConcatInPath)
+
+        if not self.do_cull:
+            self.mapSegInPath = self.mapStreetInPath
+
+        self.stp = int(round(self.tile_size,3)*self.blk)
+
+        self.N = int(math.floor(self.blk*round(self.Nf,3)))
+        self.S = int(math.floor(self.blk*round(self.Sf,3)))
+        self.E = int(math.floor(self.blk*round(self.Ef,3)))
+        self.W = int(math.floor(self.blk*round(self.Wf,3)))
+
