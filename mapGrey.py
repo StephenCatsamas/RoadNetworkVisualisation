@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 def makeGrey(file):
-    print("Grey Mask")
     fcur = args.mapGreyPath+'\\'+file
     fout = args.mapGrayMaskPath + '\\' + 'Grey.png'
         
@@ -18,11 +17,12 @@ def grey(file):
     fcur = args.mapGreyPath+'\\'+file
     fgry = args.mapGrayMaskPath + '\\' + 'Grey.png'
        
-    print("Proscessor: ", os.getpid(), "||", fcur)
+    print("Greying: ", str(os.getpid()).zfill(6), "||", fcur)
     
     imcur = Image.open(fcur)
     imgry = Image.open(fgry)
     
-    imgry.paste(imcur, (0,0), imcur)
+    
+    imgry.alpha_composite(imcur)
     imgry.save(fcur)
  

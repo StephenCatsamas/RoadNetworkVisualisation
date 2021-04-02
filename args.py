@@ -1,21 +1,28 @@
 import math
 
+##colour mode 'angle', 'width'
+colour_mode = 'width'
+
 ##if true deletes old files when run
-new = True
+new = False
+force_seg = False
 
 ##coordinate bounging boxes in lat long degrees
-Nf =  45.8
-Sf =  45.2
-Ef =  -72.8
-Wf =  -74.2
+Nf =  -10.0
+Sf =  -45.0
+Ef =  155.0
+Wf =  112.0
 
 ##decimal scale factor | have as many zeros as decimal places in bounding box coordinates
 blk = 100
 ##download block size | units (deg/blk)
-stp = 20
+stp = 500
 
 ##final image reslution aritbrary units
 res = 2000
+
+##vips path
+##vipsPath = "C:\Program Files\vips\vips-dev-8.10\bin"
 
 mapPullOutPath = "maps"
 

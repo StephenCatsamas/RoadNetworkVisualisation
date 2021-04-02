@@ -9,7 +9,7 @@ def cullStreets(file):
 
     if (not (os.path.isfile(fout))):
 
-        print("Proscessor: ", os.getpid(), "||", fcur)
+        print("Culling: ", str(os.getpid()).zfill(6), "||", fcur)
 
         myMap = ET.parse(fcur)
 

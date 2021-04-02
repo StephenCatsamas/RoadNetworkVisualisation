@@ -45,17 +45,17 @@ def draw(file):
               
 
                 if (i % 6000 == 0):
-                    print("Proscessor: ", os.getpid(), "||", i)        
+                    print("Drawing: ", str(os.getpid()).zfill(6), "||", i)        
                     
                 if (i % 12000 == 0):
-                    linecolls.append(LineCollection(seg, linewidths= .03 ,linestyle='solid', colors = colours))
+                    linecolls.append(LineCollection(seg, linewidths= .08 ,linestyle='solid', colors = colours))
                     
                     seg = np.zeros((0,2,2))
                     ln = np.zeros((2,2))
                     colours = np.zeros((0,3))
             
            
-            linecolls.append(LineCollection(seg, linewidths= .03 ,linestyle='solid', colors = colours))
+            linecolls.append(LineCollection(seg, linewidths= .08 ,linestyle='solid', colors = colours))
     
             
         fig, ax = plt.subplots(frameon=False)

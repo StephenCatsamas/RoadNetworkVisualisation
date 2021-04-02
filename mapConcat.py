@@ -41,7 +41,7 @@ def concat():
             if(ri == nx-1):
                 rowlist.append(rowimg)
             
-            print(rowimg.shape)
+            print('Concatinating: ', rowimg.shape)
              
     for i, rowimg in enumerate(rowlist):
 

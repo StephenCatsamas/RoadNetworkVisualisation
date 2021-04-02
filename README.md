@@ -10,6 +10,7 @@ To Run:
 
 Output will be a map image in file path specified
 
+This project requires a recent version of libvips (https://libvips.github.io/libvips/)
 
 Map data from openstreetmap.org
 
