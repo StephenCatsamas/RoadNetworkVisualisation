@@ -1,4 +1,4 @@
-import args
+from args import *
 import mapPull
 import mapStreet
 import mapSeg
@@ -10,6 +10,7 @@ from multiprocessing import Pool
 
 
 if __name__ == '__main__':
+    init_args()
 
     if args.flush_map_cache:
         for folder in args.folders:

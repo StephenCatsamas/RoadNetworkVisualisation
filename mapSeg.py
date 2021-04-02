@@ -1,4 +1,4 @@
-import args
+from args import *
 import os
 import math
 import colorsys
