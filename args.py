@@ -19,7 +19,7 @@ blk = 100
 stp = 500
 
 ##final image reslution aritbrary units
-res = 2000
+res = 4000
 
 ##vips path
 ##vipsPath = "C:\Program Files\vips\vips-dev-8.10\bin"

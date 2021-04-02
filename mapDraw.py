@@ -48,14 +48,14 @@ def draw(file):
                     print("Drawing: ", str(os.getpid()).zfill(6), "||", i)        
                     
                 if (i % 12000 == 0):
-                    linecolls.append(LineCollection(seg, linewidths= .08 ,linestyle='solid', colors = colours))
+                    linecolls.append(LineCollection(seg, linewidths= .02 ,linestyle='solid', colors = colours))
                     
                     seg = np.zeros((0,2,2))
                     ln = np.zeros((2,2))
                     colours = np.zeros((0,3))
             
            
-            linecolls.append(LineCollection(seg, linewidths= .08 ,linestyle='solid', colors = colours))
+            linecolls.append(LineCollection(seg, linewidths= .02 ,linestyle='solid', colors = colours))
     
             
         fig, ax = plt.subplots(frameon=False)

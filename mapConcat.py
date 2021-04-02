@@ -1,10 +1,9 @@
 import args
 import os
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+import pyvips
 
-def OrderKey(file):
+def order_key(file):
     Cia = file.find("_")
     Cib = file.find("_", Cia+1)
     Cic = file.find(".", Cib)
@@ -15,7 +14,6 @@ def OrderKey(file):
     return -(flat+90)*1000000+(flon+180)
 
 def concat():
-    outimg = np.zeros((4,4,4))
     rowlist = list()
 
     ny = len(range(args.S,args.N,args.stp))
@@ -23,32 +21,10 @@ def concat():
 
     for root,dirs,files in os.walk(args.mapConcatInPath):
        
-       files.sort(key = OrderKey)
+       files.sort(key = order_key)
        
-       for i,file in enumerate(files):
-
-            fcur = args.mapConcatInPath+'\\'+file
-                       
-            imcur = mpimg.imread(fcur)
-            
-            ri = i % nx
-            
-            if ri != 0:
-                rowimg = np.concatenate((rowimg,imcur), axis = 1)
-            if ri == 0:
-                rowimg = imcur
-            
-            if(ri == nx-1):
-                rowlist.append(rowimg)
-            
-            print('Concatinating: ', rowimg.shape)
-             
-    for i, rowimg in enumerate(rowlist):
-
-        if i != 0:
-            outimg = np.concatenate((outimg,rowimg), axis = 0)
-            
-        if i == 0:
-            outimg = rowimg
-
-    plt.imsave(args.mapConcatOutPath, outimg)
+    images = [pyvips.Image.new_from_file(args.mapConcatInPath+'\\'+file) for file in files]
+    
+    outimg = pyvips.Image.arrayjoin(images, across = nx)
+    
+    outimg.write_to_file(args.mapConcatOutPath)
