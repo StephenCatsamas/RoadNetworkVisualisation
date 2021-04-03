@@ -9,9 +9,13 @@ import os
 import sys
 from multiprocessing import Pool
 
+args = ag.ArgsContainer()
+def update_args():
+    global args
+    args.update_args()
 
 def run(): 
-    args = ag.ArgsContainer()
+    update_args_all()
         
     if args.flush_map_cache:
         for folder in args.folders:
@@ -59,7 +63,13 @@ def run():
      
     mapBitmap.concat()
     print('Finished')
-    
+ 
+def update_args_all():
+    update_args()
+    modules = [mapPull, mapStreet, mapSeg, mapDraw, mapBitmap]
+    for modules in modules:
+        modules.update_args()
+ 
 if __name__ == '__main__':
     run()
     

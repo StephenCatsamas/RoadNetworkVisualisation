@@ -7,8 +7,12 @@ import csv
 import numpy as np
 import time
 
+args = ag.ArgsContainer()
+def update_args():
+    global args
+    args.update_args()
+
 def draw(file):
-        args = ag.ArgsContainer()
         
         fcur = args.mapDrawInPath+'\\'+file
         fout = args.mapDrawOutPath+'\\'+file[:-4] + '.png'

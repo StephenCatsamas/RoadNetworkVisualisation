@@ -2,7 +2,10 @@ import math
 import csv
 
 class ArgsContainer():
-    def __init__(self):
+    def __init__(self,file = 'args_lst.txt'):
+        self.update_args(file = file)
+        
+    def update_args(self,file = 'args_lst.txt'):
         with open('args_lst.txt', 'r', newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter='=',
                                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
