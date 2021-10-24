@@ -1,0 +1,44 @@
+##colour mode "angle", "width"
+colour_mode=width
+
+##if true deletes old files when run
+flush_map_cache=True
+do_cull=False
+force_seg=False
+
+##coordinate bounging boxes in lat long degrees #max resolution 0.001 degree
+Nf=62.0
+Sf=32.0
+Ef=40.0
+Wf=-12.0
+
+##download block size (units deg)
+tile_size=2.0
+
+##final image reslution aritbrary units
+res=2000.0
+##plot sement width
+seg_width=0.04
+
+##muliprocessing threads
+threads=4
+
+mapPullOutPath="maps"
+
+mapStreetInPath="maps"
+mapStreetOutPath="mapStreet"
+
+mapSegInPath="mapStreet"
+mapSegOutPath="mapSeg"
+
+mapDrawInPath="mapSeg"
+mapDrawOutPath="mapIm"
+
+mapGreyInPath="mapIm"
+mapGreyOutPath="mapGrey"
+mapGrayMaskPath="mapMask"
+
+mapConcatInPath="mapGrey"
+##final image output
+mapConcatOutPath="afinal.png"
+

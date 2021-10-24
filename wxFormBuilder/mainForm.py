@@ -1,13 +1,3 @@
-import tkinter as tk
-import csv
-import os
-import subprocess
-import map
-import threading
-import math
-
-# https://tile.openstreetmap.org/7/11/36.png
-
 ###########################################################################
 ## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
 ## http://www.wxformbuilder.org/
@@ -340,3 +330,4 @@ if __name__ == "__main__":
     frame =  MainForm(None)
     frame.Show()
     app.MainLoop()
+
