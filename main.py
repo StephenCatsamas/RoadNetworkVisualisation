@@ -6,7 +6,7 @@ import map
 import threading
 import math
 
-
+# https://tile.openstreetmap.org/7/11/36.png
 
 class app(tk.Tk):
     def __init__(self):
