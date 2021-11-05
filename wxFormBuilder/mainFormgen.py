@@ -17,11 +17,13 @@ import wx.xrc
 class MainForm ( wx.Frame ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 400,400 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 800,400 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
-		self.SetSizeHints( wx.Size( 400,400 ), wx.DefaultSize )
+		self.SetSizeHints( wx.Size( 800,400 ), wx.DefaultSize )
 		self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
 		self.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_3DLIGHT ) )
+
+		bSizermain = wx.BoxSizer( wx.HORIZONTAL )
 
 		bSizer2 = wx.BoxSizer( wx.VERTICAL )
 
@@ -160,7 +162,15 @@ class MainForm ( wx.Frame ):
 		bSizer2.Add( confSizer, 0, wx.EXPAND, 5 )
 
 
-		self.SetSizer( bSizer2 )
+		bSizermain.Add( bSizer2, 1, wx.EXPAND, 5 )
+
+		self.map_view = wx.StaticBitmap( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.Size( 400,400 ), 0 )
+		self.map_view.SetMinSize( wx.Size( 400,400 ) )
+
+		bSizermain.Add( self.map_view, 0, wx.ALL, 5 )
+
+
+		self.SetSizer( bSizermain )
 		self.Layout()
 
 		self.Centre( wx.BOTH )
@@ -176,6 +186,7 @@ class MainForm ( wx.Frame ):
 		self.flush_cache_widg.Bind( wx.EVT_CHECKBOX, self.lambda : self.update_args('flush_map_cache') )
 		self.do_cull_widg.Bind( wx.EVT_CHECKBOX, self.lambda : self.update_args('do_cull') )
 		self.force_set_widg.Bind( wx.EVT_CHECKBOX, self.lambda : self.update_args('force_seg') )
+		self.restore_button.Bind( wx.EVT_BUTTON, self.restore_options )
 		self.ok_button.Bind( wx.EVT_BUTTON, self.make_map )
 		self.cancel_button.Bind( wx.EVT_BUTTON, self.exit() )
 
@@ -212,6 +223,9 @@ class MainForm ( wx.Frame ):
 		event.Skip()
 
 	def lambda : self.update_args('force_seg')( self, event ):
+		event.Skip()
+
+	def restore_options( self, event ):
 		event.Skip()
 
 	def make_map( self, event ):

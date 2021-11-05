@@ -1,22 +1,9 @@
-###########################################################################
-## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
-## http://www.wxformbuilder.org/
-##
-###########################################################################
-
-import wx
-import wx.xrc
-import csv
-import math
-###########################################################################
-## Class MainForm
-###########################################################################
 
 class MainForm ( wx.Frame ):
 
     def __init__( self, parent ):    
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 400,400 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
-
+        self.SetIcon(wx.Icon("../figs/icon.ico"))
         self.SetSizeHints( wx.Size( 400,400 ), wx.DefaultSize )
         self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
         self.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_3DLIGHT ) )
