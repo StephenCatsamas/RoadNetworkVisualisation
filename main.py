@@ -302,12 +302,17 @@ class MainForm ( wx.Frame ):
                 
     def preview_map(self):
         print("building preview")
-        tile = uiMapPreview.make_preview(
+        map_img = uiMapPreview.make_preview(
             float(self.args_dict[id(self.north)]), 
             float(self.args_dict[id(self.south)]), 
             float(self.args_dict[id(self.east)]), 
             float(self.args_dict[id(self.west)]))
-        self.map_view.CopyFromBuffer(tile.write_to_memory())
+        scale = 400/map_img.height    
+        map_img = map_img.resize(scale)
+        dat = map_img.write_to_memory()
+        map_img.write_to_file('prev.png')
+        bitmap = wx.Bitmap.FromBuffer(map_img.width,map_img.height,dat)
+        self.map_view.SetBitmap(bitmap)
 
     def update_widgets(self,widget = None):
         self.preview_map()

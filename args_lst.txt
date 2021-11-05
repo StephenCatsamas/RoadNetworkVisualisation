@@ -7,10 +7,10 @@ do_cull=False
 force_seg=False
 
 ##coordinate bounging boxes in lat long degrees #max resolution 0.001 degree
-Nf=-37.0
-Sf=-38.0
-Ef=145.0
-Wf=144.0
+Nf=51.75
+Sf=51.25
+Ef=0.0
+Wf=-0.5
 
 ##download block size (units deg)
 tile_size=0.5
