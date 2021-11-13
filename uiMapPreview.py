@@ -16,6 +16,7 @@ def num2deg(xtile, ytile, zoom):
   lat_deg = math.degrees(lat_rad)
   return (lat_deg, lon_deg)
 
+
 def get_tile_ords(N,S,E,W):
     ##we want to find 4 tiles which cover out range
     
@@ -62,36 +63,47 @@ def draw_bounding_box(tile, bounds, image_bounds):
     Epix = tile.width*((E - iW)/(iE - iW)) 
     Wpix = tile.width*((W - iW)/(iE - iW)) 
     
-    tile = tile.draw_line([255,0,0], Wpix,Npix,Wpix,Spix)
-    tile = tile.draw_line([255,0,0], Wpix,Spix,Epix,Spix)
-    tile = tile.draw_line([255,0,0], Epix,Spix,Epix,Npix)
-    tile = tile.draw_line([255,0,0], Epix,Npix,Wpix,Npix)
+    svg = '<svg width="512" height="512">  <rect x="%d" y="%d" width="%d" height="%d" style="fill:white;stroke:black;stroke-width:5;fill-opacity:0;stroke-opacity:1" /> </svg>' % (Wpix,Npix,Epix-Wpix, Spix-Npix)
+    overlay = pyvips.Image.svgload_buffer(bytes(svg, 'utf-8'))
+ 
+    tile = (tile + (0, 0, 0, 0)).copy(interpretation="srgb")
+    tile.write_to_file("band.png")
     
-    center = tile.extract_area(Wpix, Npix, (Epix - Wpix), (Spix - Npix))
-    grey = pyvips.Image.black(tile.width, tile.height)
-    # grey = grey.draw_rect([255,255,255], 0,0, grey.width,grey.height)
-    tile = tile.composite2(grey, 'over')
-    # tile = tile.composite2(center, 'over')
-    return tile
+    print(tile.interpretation)
+    print(tile.bands)
+    print(overlay.interpretation)
+    print(overlay.bands)
 
     
-    
+    preview_tile = tile+overlay
+
+    return preview_tile
+
+class TileCache():
+    tiles = None
+    stich = None
+
+tileCache = TileCache()
+
 def make_preview(N,S,E,W):
     print(N)
     print(S)
     print(E)
     print(W)
-    
+        
     tiles = get_tile_ords(N,S,E,W)
-    images_tiles = [fetch_tile(tile) for tile in tiles]
-    stich = pyvips.Image.arrayjoin(images_tiles, across = 2)
-    stich.write_to_file("stich.png")
+    
+    if tileCache.tiles != tiles: 
+        tileCache.tiles = tiles
+        images_tiles = [fetch_tile(tile) for tile in tiles]
+        tileCache.stich = pyvips.Image.arrayjoin(images_tiles, across = 2)
+    tileCache.stich.write_to_file("stich.png")
     
     z,x,y = tiles[0]
     iN,iW = num2deg(x,y,z)
     iS,iE = num2deg(x+2,y+2,z)
     
-    stich = draw_bounding_box(stich, (N,S,E,W), (iN,iS,iE,iW))
+    stich = draw_bounding_box(tileCache.stich, (N,S,E,W), (iN,iS,iE,iW))
     
     return stich
     
