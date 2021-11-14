@@ -17,9 +17,9 @@ import wx.xrc
 class MainForm ( wx.Frame ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 800,400 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 800,450 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
-		self.SetSizeHints( wx.Size( 800,400 ), wx.DefaultSize )
+		self.SetSizeHints( wx.Size( 800,450 ), wx.DefaultSize )
 		self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
 		self.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_3DLIGHT ) )
 
@@ -27,6 +27,7 @@ class MainForm ( wx.Frame ):
 
 		bSizer2 = wx.BoxSizer( wx.VERTICAL )
 
+		bSizer2.SetMinSize( wx.Size( 400,-1 ) )
 		paramSizer = wx.GridSizer( 0, 2, 0, 0 )
 
 		self.north_label = wx.StaticText( self, wx.ID_ANY, u"North Limit (deg):", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -162,12 +163,12 @@ class MainForm ( wx.Frame ):
 		bSizer2.Add( confSizer, 0, wx.EXPAND, 5 )
 
 
-		bSizermain.Add( bSizer2, 1, wx.EXPAND, 5 )
+		bSizermain.Add( bSizer2, 0, wx.EXPAND, 5 )
 
 		self.map_view = wx.StaticBitmap( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.Size( 400,400 ), 0 )
 		self.map_view.SetMinSize( wx.Size( 400,400 ) )
 
-		bSizermain.Add( self.map_view, 0, wx.ALL, 5 )
+		bSizermain.Add( self.map_view, 1, wx.ALL|wx.EXPAND, 5 )
 
 
 		self.SetSizer( bSizermain )
@@ -176,6 +177,7 @@ class MainForm ( wx.Frame ):
 		self.Centre( wx.BOTH )
 
 		# Connect Events
+		self.north.Bind( wx.EVT_MOUSEWHEEL, self.spinbox_scroll() )
 		self.north.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('Nf') )
 		self.south.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('Sf') )
 		self.west.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('Wf') )
@@ -195,6 +197,9 @@ class MainForm ( wx.Frame ):
 
 
 	# Virtual event handlers, override them in your derived class
+	def spinbox_scroll()( self, event ):
+		event.Skip()
+
 	def lambda a,b,c : self.update_args('Nf')( self, event ):
 		event.Skip()
 

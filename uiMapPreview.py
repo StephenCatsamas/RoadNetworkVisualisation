@@ -26,13 +26,10 @@ def get_tile_ords(N,S,E,W):
         if(Nc < N or Wc > W):
             continue
         Sc, Ec = num2deg(x+1+1,y+1+1,zoom)
-        print("==")
-        print(Sc)
-        print(Ec)
+
         if(Sc < S and Ec > E):
             break
-    print(zoom)
-    print(Nc, Sc, Ec, Wc)
+
     
     return ((zoom,x,y),(zoom,x+1,y),(zoom,x,y+1),(zoom,x+1,y+1))
 
@@ -54,29 +51,22 @@ def sec_integral(a,b):
 def draw_bounding_box(tile, bounds, image_bounds):
     N,S,E,W = bounds
     iN,iS,iE,iW = image_bounds
-    print(iS)
-    print(iN)
-    print(sec_integral(iS,iN))
+
     zl = tile.height / sec_integral(iN,iS)
     Npix = sec_integral(iN, N) * zl
     Spix = sec_integral(iN, S) * zl
     Epix = tile.width*((E - iW)/(iE - iW)) 
     Wpix = tile.width*((W - iW)/(iE - iW)) 
+
     
-    svg = '<svg width="512" height="512">  <rect x="%d" y="%d" width="%d" height="%d" style="fill:white;stroke:black;stroke-width:5;fill-opacity:0;stroke-opacity:1" /> </svg>' % (Wpix,Npix,Epix-Wpix, Spix-Npix)
+    svg = '<svg width="512" height="512">'
+    svg += '<path d="M0,0  h512 v512 h-512 z M%d,%d v%d h%d v-%d z" stroke="black" fill="grey" fill-opacity="0.3"   />' % (Wpix,Npix,Spix-Npix, Epix-Wpix, Spix-Npix)
+    svg += '</svg>'
+    # print(svg)
     overlay = pyvips.Image.svgload_buffer(bytes(svg, 'utf-8'))
- 
-    tile = (tile + (0, 0, 0, 0)).copy(interpretation="srgb")
-    tile.write_to_file("band.png")
-    
-    print(tile.interpretation)
-    print(tile.bands)
-    print(overlay.interpretation)
-    print(overlay.bands)
-
-    
-    preview_tile = tile+overlay
-
+   
+    preview_tile = tile.composite2(overlay, 'over')
+    # preview_tile.write_to_file('cover.png')
     return preview_tile
 
 class TileCache():
@@ -86,10 +76,6 @@ class TileCache():
 tileCache = TileCache()
 
 def make_preview(N,S,E,W):
-    print(N)
-    print(S)
-    print(E)
-    print(W)
         
     tiles = get_tile_ords(N,S,E,W)
     
@@ -97,7 +83,7 @@ def make_preview(N,S,E,W):
         tileCache.tiles = tiles
         images_tiles = [fetch_tile(tile) for tile in tiles]
         tileCache.stich = pyvips.Image.arrayjoin(images_tiles, across = 2)
-    tileCache.stich.write_to_file("stich.png")
+    # tileCache.stich.write_to_file("stich.png")
     
     z,x,y = tiles[0]
     iN,iW = num2deg(x,y,z)

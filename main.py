@@ -14,15 +14,18 @@ import pyvips
 class MainForm ( wx.Frame ):
 
     def __init__( self, parent ):    
-        wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 800,400 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+        wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 800,450 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+        
         self.SetIcon(wx.Icon("figs/icon.ico"))
-        self.SetSizeHints( wx.Size( 800,400 ), wx.DefaultSize )
+        self.SetSizeHints( wx.Size( 800,450 ), wx.DefaultSize )
         self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
         self.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_3DLIGHT ) )
-        bSizermain = wx.BoxSizer( wx.HORIZONTAL )                                                  
-
+        
+        bSizermain = wx.BoxSizer( wx.HORIZONTAL )         
+        
         bSizer2 = wx.BoxSizer( wx.VERTICAL )
-
+        
+        bSizer2.SetMinSize( wx.Size( 400,-1 ) )
         paramSizer = wx.GridSizer( 0, 2, 0, 0 )
 
         self.north_label = wx.StaticText( self, wx.ID_ANY, u"North Limit (deg):", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -161,7 +164,7 @@ class MainForm ( wx.Frame ):
         self.map_view = wx.StaticBitmap( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.Size( 400,400 ), 0 )
         self.map_view.SetMinSize( wx.Size( 400,400 ) )
 
-        bSizermain.Add( self.map_view, 0, wx.ALL, 5 )
+        bSizermain.Add( self.map_view, 1, wx.ALL|wx.EXPAND, 5 )
 
 
         # self.SetSizer( bSizer2 )
@@ -174,12 +177,19 @@ class MainForm ( wx.Frame ):
 
         # Connect Events
         self.north.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.north) )
+        self.north.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.north) )
         self.south.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.south) )
+        self.south.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.south) )
         self.west.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.west) )
+        self.west.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.west) )
         self.east.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.east) )
+        self.east.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.east) )
         self.tile_res.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.tile_res) )
+        self.tile_res.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.tile_res) )
         self.image_res.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.image_res) )
+        self.image_res.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.image_res) )
         self.draw_width.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.draw_width) )
+        self.draw_width.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.draw_width) )
         self.flush_cache_widg.Bind( wx.EVT_CHECKBOX, lambda a : self.update_args(self.flush_cache_widg) )
         self.do_cull_widg.Bind( wx.EVT_CHECKBOX, lambda a : self.update_args(self.do_cull_widg) )
         self.force_set_widg.Bind( wx.EVT_CHECKBOX, lambda a : self.update_args(self.force_set_widg) )
@@ -220,7 +230,18 @@ class MainForm ( wx.Frame ):
 
         #load current values
         self.load_options()
-        
+    
+    def spinbox_increment(self, spinbox, dir):
+        val = spinbox.GetValue()
+        val += dir*spinbox.GetIncrement()
+        spinbox.SetValue(val)
+        self.update_args()
+    
+    def spinbox_scroll(self,event, spinbox):
+        if(event.GetWheelRotation() > 0):
+            self.spinbox_increment(spinbox, 1)
+        if(event.GetWheelRotation() < 0):
+            self.spinbox_increment(spinbox, -1)  
 
     def __del__( self ):
         pass
@@ -309,9 +330,10 @@ class MainForm ( wx.Frame ):
             float(self.args_dict[id(self.west)]))
         scale = 400/map_img.height    
         map_img = map_img.resize(scale)
+        map_img.write_to_file('resize.png')
         dat = map_img.write_to_memory()
         map_img.write_to_file('prev.png')
-        bitmap = wx.Bitmap.FromBuffer(map_img.width,map_img.height,dat)
+        bitmap = wx.Bitmap.FromBufferRGBA(map_img.width,map_img.height,dat)
         self.map_view.SetBitmap(bitmap)
 
     def update_widgets(self,widget = None):
