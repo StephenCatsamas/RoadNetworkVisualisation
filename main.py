@@ -16,7 +16,9 @@ class MainForm ( wx.Frame ):
     def __init__( self, parent ):    
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 800,450 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
         
-        self.SetIcon(wx.Icon("figs/icon.ico"))
+        dirname = os.path.dirname(__file__)
+        fp = os.path.join(dirname, "figs/icon.ico")
+        self.SetIcon(wx.Icon(fp))
         self.SetSizeHints( wx.Size( 800,450 ), wx.DefaultSize )
         self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
         self.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_3DLIGHT ) )
@@ -159,12 +161,13 @@ class MainForm ( wx.Frame ):
 
 
         bSizer2.Add( confSizer, 0, wx.EXPAND, 5 )
-        bSizermain.Add( bSizer2, 1, wx.EXPAND, 5 )
+        bSizermain.Add( bSizer2, 0, wx.EXPAND, 5 )
 
-        self.map_view = wx.StaticBitmap( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.Size( 400,400 ), 0 )
+        self.map_view = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 400,400 ), wx.TAB_TRAVERSAL)
         self.map_view.SetMinSize( wx.Size( 400,400 ) )
+        self.map_view.SetBackgroundStyle(wx.BG_STYLE_PAINT)
 
-        bSizermain.Add( self.map_view, 1, wx.ALL|wx.EXPAND, 5 )
+        bSizermain.Add( self.map_view, 1, wx.EXPAND | wx.ALL, 5 )
 
 
         # self.SetSizer( bSizer2 )
@@ -196,6 +199,9 @@ class MainForm ( wx.Frame ):
         self.ok_button.Bind( wx.EVT_BUTTON, lambda a : self.make_map() )
         self.cancel_button.Bind( wx.EVT_BUTTON, lambda a : exit() )
         self.restore_button.Bind( wx.EVT_BUTTON, lambda a : self.restore_options() )
+        
+        self.map_view.Bind( wx.EVT_PAINT, self.paint_map )
+
         
         #list of widgets
         self.widgets = {self.north,self.south,self.west,self.east,self.tile_res,self.image_res,self.draw_width,self.flush_cache_widg,self.do_cull_widg,self.force_set_widg}
@@ -247,7 +253,9 @@ class MainForm ( wx.Frame ):
         pass
     
     def read_options_file(self, fp):
-        with open('args_lst.txt', 'r', newline='') as csvfile:
+        dirname = os.path.dirname(__file__)
+        fp = os.path.join(dirname, fp)
+        with open(fp, 'r', newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter='=',
                                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
             self.arg_lines = {}
@@ -280,7 +288,9 @@ class MainForm ( wx.Frame ):
         csv_rows = []
         write_lines = {}
         
-        with open('args_lst.txt', 'r', newline='') as csvfile:
+        dirname = os.path.dirname(__file__)
+        fp = os.path.join(dirname, 'args_lst.txt')
+        with open(fp, 'r', newline='') as csvfile:
             row = csv.reader(csvfile, delimiter='=',
                                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
             csv_rows.extend(row)
@@ -297,7 +307,9 @@ class MainForm ( wx.Frame ):
             print(inv_widget_dict)
             print()
             write_lines[key] = [value, self.args_dict[self.widgets_dict[value]]]
-
+        
+        dirname = os.path.dirname(__file__)
+        fp = os.path.join(dirname, 'args_lst.txt')
         with open('args_lst.txt', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter='=',
                                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -320,8 +332,14 @@ class MainForm ( wx.Frame ):
                 pass
                 
         self.update_widgets('info')
-                
-    def preview_map(self):
+     
+    def paint_map(self, event):
+        for i in range(200):
+            bitmap = self.preview_map()
+            dc = wx.AutoBufferedPaintDC(self.map_view)
+            dc.DrawBitmap(bitmap, 0, 0)
+
+    def preview_map(self):    
         print("building preview")
         map_img = uiMapPreview.make_preview(
             float(self.args_dict[id(self.north)]), 
@@ -330,15 +348,17 @@ class MainForm ( wx.Frame ):
             float(self.args_dict[id(self.west)]))
         scale = 400/map_img.height    
         map_img = map_img.resize(scale)
-        map_img.write_to_file('resize.png')
+        
+        # map_img.write_to_file('resize.png')
         dat = map_img.write_to_memory()
-        map_img.write_to_file('prev.png')
         bitmap = wx.Bitmap.FromBufferRGBA(map_img.width,map_img.height,dat)
-        self.map_view.SetBitmap(bitmap)
+        return bitmap
+        # self.map_view.SetBitmap(bitmap)
 
     def update_widgets(self,widget = None):
-        self.preview_map()
-    
+
+        self.map_view.Refresh()
+        
         if widget == None:
             for widget in self.widgets:
                 try:

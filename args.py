@@ -1,4 +1,5 @@
 import math
+import os
 import csv
 
 class ArgsContainer():
@@ -6,7 +7,9 @@ class ArgsContainer():
         self.update_args(file = file)
         
     def update_args(self,file = 'args_lst.txt'):
-        with open('args_lst.txt', 'r', newline='') as csvfile:
+        dirname = os.path.dirname(__file__)
+        fp = os.path.join(dirname, file)
+        with open(fp, 'r', newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter='=',
                                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
             

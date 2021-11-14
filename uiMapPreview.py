@@ -90,7 +90,6 @@ def make_preview(N,S,E,W):
     iS,iE = num2deg(x+2,y+2,z)
     
     stich = draw_bounding_box(tileCache.stich, (N,S,E,W), (iN,iS,iE,iW))
-    
     return stich
     
     

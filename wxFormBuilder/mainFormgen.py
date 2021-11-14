@@ -165,10 +165,10 @@ class MainForm ( wx.Frame ):
 
 		bSizermain.Add( bSizer2, 0, wx.EXPAND, 5 )
 
-		self.map_view = wx.StaticBitmap( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.Size( 400,400 ), 0 )
+		self.map_view = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 400,400 ), wx.TAB_TRAVERSAL )
 		self.map_view.SetMinSize( wx.Size( 400,400 ) )
 
-		bSizermain.Add( self.map_view, 1, wx.ALL|wx.EXPAND, 5 )
+		bSizermain.Add( self.map_view, 1, wx.EXPAND |wx.ALL, 5 )
 
 
 		self.SetSizer( bSizermain )
@@ -179,11 +179,17 @@ class MainForm ( wx.Frame ):
 		# Connect Events
 		self.north.Bind( wx.EVT_MOUSEWHEEL, self.spinbox_scroll() )
 		self.north.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('Nf') )
+		self.south.Bind( wx.EVT_MOUSEWHEEL, self.implement )
 		self.south.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('Sf') )
+		self.west.Bind( wx.EVT_MOUSEWHEEL, self.implement )
 		self.west.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('Wf') )
+		self.east.Bind( wx.EVT_MOUSEWHEEL, self.implement )
 		self.east.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('Ef') )
+		self.tile_res.Bind( wx.EVT_MOUSEWHEEL, self.implement )
 		self.tile_res.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('tile_size') )
+		self.image_res.Bind( wx.EVT_MOUSEWHEEL, self.implement )
 		self.image_res.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('res') )
+		self.draw_width.Bind( wx.EVT_MOUSEWHEEL, self.implement )
 		self.draw_width.Bind( wx.EVT_SPINCTRLDOUBLE, self.lambda a,b,c : self.update_args('seg_width') )
 		self.flush_cache_widg.Bind( wx.EVT_CHECKBOX, self.lambda : self.update_args('flush_map_cache') )
 		self.do_cull_widg.Bind( wx.EVT_CHECKBOX, self.lambda : self.update_args('do_cull') )
@@ -191,6 +197,7 @@ class MainForm ( wx.Frame ):
 		self.restore_button.Bind( wx.EVT_BUTTON, self.restore_options )
 		self.ok_button.Bind( wx.EVT_BUTTON, self.make_map )
 		self.cancel_button.Bind( wx.EVT_BUTTON, self.exit() )
+		self.map_view.Bind( wx.EVT_PAINT, self.implement )
 
 	def __del__( self ):
 		pass
@@ -203,20 +210,28 @@ class MainForm ( wx.Frame ):
 	def lambda a,b,c : self.update_args('Nf')( self, event ):
 		event.Skip()
 
+	def implement( self, event ):
+		event.Skip()
+
 	def lambda a,b,c : self.update_args('Sf')( self, event ):
 		event.Skip()
+
 
 	def lambda a,b,c : self.update_args('Wf')( self, event ):
 		event.Skip()
 
+
 	def lambda a,b,c : self.update_args('Ef')( self, event ):
 		event.Skip()
+
 
 	def lambda a,b,c : self.update_args('tile_size')( self, event ):
 		event.Skip()
 
+
 	def lambda a,b,c : self.update_args('res')( self, event ):
 		event.Skip()
+
 
 	def lambda a,b,c : self.update_args('seg_width')( self, event ):
 		event.Skip()
@@ -238,5 +253,6 @@ class MainForm ( wx.Frame ):
 
 	def exit()( self, event ):
 		event.Skip()
+
 
 
