@@ -201,6 +201,7 @@ class MainForm ( wx.Frame ):
         self.restore_button.Bind( wx.EVT_BUTTON, lambda a : self.restore_options() )
         
         self.map_view.Bind( wx.EVT_PAINT, self.paint_map )
+        self.map_view.Bind( wx.EVT_SIZE , self.map_resize)
 
         
         #list of widgets
@@ -333,23 +334,31 @@ class MainForm ( wx.Frame ):
                 
         self.update_widgets('info')
      
+    def map_resize(self,event):
+        self.map_view.Refresh()
+        
     def paint_map(self, event):
-        for i in range(200):
-            bitmap = self.preview_map()
-            dc = wx.AutoBufferedPaintDC(self.map_view)
-            dc.DrawBitmap(bitmap, 0, 0)
+        bitmap = self.preview_map()
+        dc = wx.PaintDC(self.map_view)
+        dc.DrawBitmap(bitmap, 0,0)
 
     def preview_map(self):    
-        print("building preview")
-        map_img = uiMapPreview.make_preview(
-            float(self.args_dict[id(self.north)]), 
+        size = self.map_view.GetSize()
+        bounds = (float(self.args_dict[id(self.north)]), 
             float(self.args_dict[id(self.south)]), 
             float(self.args_dict[id(self.east)]), 
             float(self.args_dict[id(self.west)]))
-        scale = 400/map_img.height    
-        map_img = map_img.resize(scale)
+        map_img,selection_bounds = uiMapPreview.make_preview(size, bounds)
         
-        # map_img.write_to_file('resize.png')
+        xSize,ySize = size
+        selection_bounds = [round(x) for x in selection_bounds]
+        Npos,Spos,Epos,Wpos = selection_bounds
+        xCrop = 0 if Epos < xSize else Epos - xSize
+        yCrop = 0 if Spos < ySize else Spos - ySize
+        
+        print(xCrop, yCrop, xSize, ySize)
+        map_img = map_img.crop(xCrop, yCrop, xSize, ySize)
+        
         dat = map_img.write_to_memory()
         bitmap = wx.Bitmap.FromBufferRGBA(map_img.width,map_img.height,dat)
         return bitmap
