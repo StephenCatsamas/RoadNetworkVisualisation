@@ -353,8 +353,8 @@ class MainForm ( wx.Frame ):
         xSize,ySize = size
         selection_bounds = [round(x) for x in selection_bounds]
         Npos,Spos,Epos,Wpos = selection_bounds
-        xCrop = 0 if Epos < xSize else Epos - xSize
-        yCrop = 0 if Spos < ySize else Spos - ySize
+        xCrop = 0.5*(Epos+Wpos - xSize)
+        yCrop = 0.5*(Spos+Npos - ySize)
         
         print(xCrop, yCrop, xSize, ySize)
         map_img = map_img.crop(xCrop, yCrop, xSize, ySize)
