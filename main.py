@@ -11,6 +11,50 @@ import pyvips
 
 # https://tile.openstreetmap.org/7/11/36.png
 
+
+
+class SpinCtrlDoubleAdpt(wx.SpinCtrlDouble):
+    
+    def __init__(self, *args, **kwargs):
+        wx.SpinCtrl.__init__(self, *args, **kwargs)
+        self.increment = self.GetIncrement()
+        self.previous = self.GetValue()
+        self.Bind(wx.EVT_MOUSEWHEEL, self.spinbox_scroll)
+        self.Bind(wx.EVT_SPINCTRLDOUBLE, self.checkIncrement)
+
+    def spinbox_increment(self, dir):
+        val = self.GetValue()
+        val += dir*self.GetIncrement()
+        self.SetValue(val)
+        wx.PostEvent(self.GetEventHandler(), wx.PyCommandEvent(wx.EVT_SPINCTRLDOUBLE.typeId, self.GetId()))
+    
+    def spinbox_scroll(self,event):
+        if(event.GetWheelRotation() > 0):
+            self.spinbox_increment(1)
+        if(event.GetWheelRotation() < 0):
+            self.spinbox_increment(-1)
+
+
+    def checkIncrement(self, event):
+        print('aa')
+        val = self.GetValue()
+        inc_p = get10pow(self.increment)
+        val_p = get10pow(val)
+        pre_p = get10pow(self.previous)
+        
+        if(pre_p != inc_p and val_p != inc_p):
+            self.increment(10**inc_p)
+            self.SetIncrement(self.increment)
+        self.previous = val
+        event.Skip()
+        
+        
+    def get10pow(self, a):
+        p = round(math.log10(a)+1)
+        while(math.modf(a*(10**(-p)))[0] != 0):
+            p -= 1;
+        return p
+
 class MainForm ( wx.Frame ):
 
     def __init__( self, parent ):    
@@ -35,7 +79,7 @@ class MainForm ( wx.Frame ):
 
         paramSizer.Add( self.north_label, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-        self.north = wx.SpinCtrlDouble( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, -90, 90, 0, 0.001 )
+        self.north = SpinCtrlDoubleAdpt( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, -90, 90, 0, 0.001 )
         self.north.SetDigits( 3 )
         paramSizer.Add( self.north, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, 5 )
 
@@ -44,7 +88,7 @@ class MainForm ( wx.Frame ):
 
         paramSizer.Add( self.south_label, 0, wx.ALL, 5 )
 
-        self.south = wx.SpinCtrlDouble( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, -90, 90, 0, 0.001 )
+        self.south = SpinCtrlDoubleAdpt( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, -90, 90, 0, 0.001 )
         self.south.SetDigits( 3 )
         paramSizer.Add( self.south, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
 
@@ -53,7 +97,7 @@ class MainForm ( wx.Frame ):
 
         paramSizer.Add( self.west_label, 0, wx.ALL, 5 )
 
-        self.west = wx.SpinCtrlDouble( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, -180, 180, 0, 0.001 )
+        self.west = SpinCtrlDoubleAdpt( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, -180, 180, 0, 0.001 )
         self.west.SetDigits( 3 )
         paramSizer.Add( self.west, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
 
@@ -62,7 +106,7 @@ class MainForm ( wx.Frame ):
 
         paramSizer.Add( self.east_label, 0, wx.ALL, 5 )
 
-        self.east = wx.SpinCtrlDouble( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, -180, 180, 0, 0.001 )
+        self.east = SpinCtrlDoubleAdpt( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, -180, 180, 0, 0.001 )
         self.east.SetDigits( 3 )
         paramSizer.Add( self.east, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
 
@@ -71,7 +115,7 @@ class MainForm ( wx.Frame ):
 
         paramSizer.Add( self.tile_res_label, 0, wx.ALL, 5 )
 
-        self.tile_res = wx.SpinCtrlDouble( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, 0, 20, 0, 0.001 )
+        self.tile_res = SpinCtrlDoubleAdpt( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, 0, 20, 0, 0.001 )
         self.tile_res.SetDigits( 3 )
         paramSizer.Add( self.tile_res, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
 
@@ -80,7 +124,7 @@ class MainForm ( wx.Frame ):
 
         paramSizer.Add( self.image_res_label, 0, wx.ALL, 5 )
 
-        self.image_res = wx.SpinCtrlDouble( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, 0, 1e+06, 0, 10 )
+        self.image_res = SpinCtrlDoubleAdpt( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, 0, 1e+06, 0, 10 )
         self.image_res.SetDigits( 0 )
         paramSizer.Add( self.image_res, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
 
@@ -89,7 +133,7 @@ class MainForm ( wx.Frame ):
 
         paramSizer.Add( self.draw_width_label, 0, wx.ALL, 5 )
 
-        self.draw_width = wx.SpinCtrlDouble( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, 0, 10, 0.000000, 0.01 )
+        self.draw_width = SpinCtrlDoubleAdpt( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, 0, 10, 0.000000, 0.01 )
         self.draw_width.SetDigits( 2 )
         paramSizer.Add( self.draw_width, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
 
@@ -180,19 +224,12 @@ class MainForm ( wx.Frame ):
 
         # Connect Events
         self.north.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.north) )
-        self.north.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.north) )
         self.south.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.south) )
-        self.south.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.south) )
         self.west.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.west) )
-        self.west.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.west) )
         self.east.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.east) )
-        self.east.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.east) )
         self.tile_res.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.tile_res) )
-        self.tile_res.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.tile_res) )
         self.image_res.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.image_res) )
-        self.image_res.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.image_res) )
         self.draw_width.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.draw_width) )
-        self.draw_width.Bind( wx.EVT_MOUSEWHEEL, lambda a : self.spinbox_scroll(a, self.draw_width) )
         self.flush_cache_widg.Bind( wx.EVT_CHECKBOX, lambda a : self.update_args(self.flush_cache_widg) )
         self.do_cull_widg.Bind( wx.EVT_CHECKBOX, lambda a : self.update_args(self.do_cull_widg) )
         self.force_set_widg.Bind( wx.EVT_CHECKBOX, lambda a : self.update_args(self.force_set_widg) )
@@ -331,8 +368,8 @@ class MainForm ( wx.Frame ):
                 self.args_dict[id(widget)] = widget.GetValue()
             except KeyError:
                 pass
-                
         self.update_widgets('info')
+        event.Skip()
      
     def map_resize(self,event):
         self.map_view.Refresh()
