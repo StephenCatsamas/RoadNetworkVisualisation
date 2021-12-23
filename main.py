@@ -387,13 +387,18 @@ class MainForm ( wx.Frame ):
             float(self.args_dict[id(self.west)]))
         map_img,selection_bounds = uiMapPreview.make_preview(size, bounds)
         
+        map_img.write_to_file("fullmap.png")
+        
         xSize,ySize = size
         selection_bounds = [round(x) for x in selection_bounds]
         Npos,Spos,Epos,Wpos = selection_bounds
         xCrop = 0.5*(Epos+Wpos - xSize)
         yCrop = 0.5*(Spos+Npos - ySize)
         
+        print("aaaaaaa")
+        print(selection_bounds)
         print(xCrop, yCrop, xSize, ySize)
+        
         map_img = map_img.crop(xCrop, yCrop, xSize, ySize)
         
         dat = map_img.write_to_memory()

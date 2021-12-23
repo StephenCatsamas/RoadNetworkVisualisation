@@ -65,7 +65,10 @@ def fetch_tile(tile):
     print(url_string)
     img_data = requests.get(url_string).content
     tile_data = pyvips.Image.pngload_buffer(img_data)
-      
+    
+    ###debug
+    tile_data = tile_data.draw_rect([0,0,0], 0,0,256,256)
+    ###
     return tile_data
 
 def draw_bounding_box(tile, bounds, image_bounds):
@@ -88,8 +91,8 @@ def draw_bounding_box(tile, bounds, image_bounds):
     overlay = pyvips.Image.svgload_buffer(bytes(svg, 'utf-8'))
    
     preview_tile = tile.composite2(overlay, 'over')
-    # preview_tile.write_to_file('cover.png')
-    selection_bounds = (Npix,Spix,Epix,Wpix)
+    preview_tile.write_to_file('cover.png')
+    selection_bounds = (Npix,Spix,Epix,Wpix) #pixels of selction boundary on image
     
     return preview_tile, selection_bounds
 
