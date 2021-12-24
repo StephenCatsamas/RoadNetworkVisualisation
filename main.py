@@ -212,7 +212,7 @@ class MainForm ( wx.Frame ):
         self.map_view.SetBackgroundStyle(wx.BG_STYLE_PAINT)
 
         bSizermain.Add( self.map_view, 1, wx.EXPAND | wx.ALL, 5 )
-
+        self.slippy = uiMapPreview.SlippyMap()
 
         # self.SetSizer( bSizer2 )
         self.SetSizer( bSizermain )
@@ -385,23 +385,10 @@ class MainForm ( wx.Frame ):
             float(self.args_dict[id(self.south)]), 
             float(self.args_dict[id(self.east)]), 
             float(self.args_dict[id(self.west)]))
-        map_img,selection_bounds = uiMapPreview.make_preview(size, bounds)
-        
-        map_img.write_to_file("fullmap.png")
-        
-        xSize,ySize = size
-        selection_bounds = [round(x) for x in selection_bounds]
-        Npos,Spos,Epos,Wpos = selection_bounds
-        xCrop = 0.5*(Epos+Wpos - xSize)
-        yCrop = 0.5*(Spos+Npos - ySize)
-        
-        print("aaaaaaa")
-        print(selection_bounds)
-        print(xCrop, yCrop, xSize, ySize)
-        
-        map_img = map_img.crop(xCrop, yCrop, xSize, ySize)
-        
+            
+        map_img = self.slippy.make_preview(size, bounds)
         dat = map_img.write_to_memory()
+        # bitmap = wx.Bitmap.FromBuffer(map_img.width,map_img.height,dat)
         bitmap = wx.Bitmap.FromBufferRGBA(map_img.width,map_img.height,dat)
         return bitmap
         # self.map_view.SetBitmap(bitmap)

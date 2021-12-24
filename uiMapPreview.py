@@ -2,12 +2,47 @@ import math
 import requests
 import pyvips
 
-def sec_integral(a,b):
+def sectan(z):
+    v = (1/math.cos(z)) + math.tan(z)
+    # if v < 0:
+        # raise ValueError
+    return v
+
+#only for a,b in (-pi/2 to pi/2)
+def secint(a,b):
     a = math.radians(a)
     b = math.radians(b)
-    up = (1/math.cos(b)) + math.tan(b)
-    down = (1/math.cos(a)) + math.tan(a)
-    return (math.log(abs(up)) - math.log(abs(down)))
+    up = sectan(b)
+    down = sectan(a)
+    return (math.log(up) - math.log(down))
+
+#only for b in (-pi/2 to pi/2)
+#find inverse for given initial point    
+def ifsecint(v,a):
+    a = math.radians(a)
+
+    z = math.exp(v)*sectan(a)
+    b = math.asin((z*z -1)/(1 + z*z))
+    b = math.degrees(b)
+    return b
+
+#only for b in (-pi/2 to pi/2)
+#find inverse for given end point    
+def iisecint(v,b):
+    b = math.radians(b)
+
+    z = math.exp(-v)*sectan(b)
+    a = math.asin((z*z - 1)/(1 + z*z))
+    a = math.degrees(a)
+    return a  
+
+def row_major(tile):
+    zoom,x,y = tile
+    return x,y
+    
+def col_major(tile):
+    zoom,x,y = tile
+    return y,x
 
 def deg2num(lat_deg, lon_deg, zoom):
   lat_rad = math.radians(lat_deg)
@@ -23,84 +58,6 @@ def num2deg(xtile, ytile, zoom):
   lat_deg = math.degrees(lat_rad)
   return (lat_deg, lon_deg)
 
-
-def get_tile_ords(size,bounds):
-    xSize,ySize = size
-    N,S,E,W = bounds
-    
-    xTiles = xSize//256 +1
-    yTiles = ySize//256 +1
-    ##we want to find 4 tiles which cover out range
-
-    zx = math.log2(xSize / (E - W))
-    zy = math.log2(ySize / (math.sin(math.radians(N)) - math.sin(math.radians(S)) )    )
-    
-    zoom = min(zx,zy)
-    zoom = math.floor(zoom)
-    
-    print(zx,zy)
-
-    x,y = deg2num(N,W,zoom)
-    
-    Nc, Wc = num2deg(x,y,zoom)
-    Sc, Ec = num2deg(x+xTiles,y+yTiles,zoom)
-            
-    tiles = []
-    for j in range(y-1,y+yTiles+1):
-        for i in range(x-1,x+xTiles+1):
-            if (j < 2**zoom):
-                tiles.append((zoom, i%(2**zoom),j))
-            else: 
-                tiles.append((zoom,i%(2**zoom),'OOB'))
-            
-    grid = (xTiles+2, yTiles+2)
-
-    return tiles,grid
-
-def fetch_tile(tile):
-    if tile[2] == 'OOB':
-        url_string = "https://tile.openstreetmap.org/3/2/7.png"
-    else:
-        url_string = "https://tile.openstreetmap.org/%d/%d/%d.png" % tile 
-    print(url_string)
-    img_data = requests.get(url_string).content
-    tile_data = pyvips.Image.pngload_buffer(img_data)
-    
-    ###debug
-    tile_data = tile_data.draw_rect([0,0,0], 0,0,256,256)
-    ###
-    return tile_data
-
-def draw_bounding_box(tile, bounds, image_bounds):
-    N,S,E,W = bounds
-    iN,iS,iE,iW = image_bounds
-
-    zl = tile.height / sec_integral(iN,iS)
-    Npix = sec_integral(iN, N) * zl
-    Spix = sec_integral(iN, S) * zl
-    Epix = tile.width*((E - iW)/(iE - iW)) 
-    Wpix = tile.width*((W - iW)/(iE - iW)) 
-
-    
-    svg = '<svg width="%d" height="%d">' % (tile.width, tile.height)
-    svg += '<path d="M0,0  h%d v%d h-%d z ' % (tile.width, tile.height, tile.width)
-    svg +='M%d,%d v%d h%d v-%d z" ' % (Wpix,Npix,Spix-Npix, Epix-Wpix, Spix-Npix)
-    svg += 'stroke="black" fill="grey" fill-opacity="0.3"   />' 
-    svg += '</svg>'
-    # print(svg)
-    overlay = pyvips.Image.svgload_buffer(bytes(svg, 'utf-8'))
-   
-    preview_tile = tile.composite2(overlay, 'over')
-    preview_tile.write_to_file('cover.png')
-    selection_bounds = (Npix,Spix,Epix,Wpix) #pixels of selction boundary on image
-    
-    return preview_tile, selection_bounds
-
-def row_major(tile):
-    zoom,x,y = tile
-    return x,y
-    
-
 class TileCache():
     def __init__(self):
         self.tiles = {}
@@ -115,27 +72,12 @@ class TileCache():
         if len(self.tile_queue) >= self.max_cache_size:
             remove = self.tile_queue.pop(0)
             self.tiles.pop(remove)
+            
+    def not_cached_tiles(self, tiles):
+        return [tile for tile in tiles if tile not in self.tiles]
         
-
-tileCache = TileCache()
-
 def make_preview(size,bounds):
-        
-    tiles,grid = get_tile_ords(size,bounds)
-    
-    xTiles,yTiles = grid
-    
-    needed_tiles = not_cached_tiles(tiles)
-    
-    for tile in needed_tiles:
-        tileCache.add_tile(tile,fetch_tile(tile))
-    if tileCache.stich_tiles != tiles:
-        images_tiles = [tileCache.tiles[tile] for tile in tiles]
-        images_tiles.sort(key = row_major)
-        tileCache.stich = pyvips.Image.arrayjoin(images_tiles, across = xTiles)
-        tileCache.stich_tiles = tiles
-    # tileCache.stich.write_to_file("stich.png")
-    
+       
     z,x,y = tiles[0]
     iN,iW = num2deg(x,y,z)
     iS,iE = num2deg(x+xTiles,y+yTiles,z)
@@ -143,11 +85,190 @@ def make_preview(size,bounds):
     stich,selection_bounds = draw_bounding_box(tileCache.stich, bounds, (iN,iS,iE,iW))
     return stich,selection_bounds
     
+
+
+
+
+class SlippyMap():
+    def __init__(self):
+        self.tileCache = TileCache()
+        # self.zoom
+        # self.screen_size
+        # self.screen_bounds
+        # self.selection_bounds
+        # self.map
+        # self.map_bounds
+        # self.tiles = []
+        
+        self.tilesize = 256
     
-def not_cached_tiles(tiles):
-    return [tile for tile in tiles if tile not in tileCache.tiles]
+    #finds lat and lon from screen space pixel
+    def pix2deg(self, pix):
+        x,y = pix
+        
+        zl = 2**(-(self.zoom+8))*360
+        slat = self.screen_bounds[0]
+        slon = self.screen_bounds[3]
+        lon = slon + x*zl
+        lat = ifsecint(math.radians(-y*zl),slat)
+        
+        return (lat,lon)
+    
+    #find screen space pixel from lat and lon
+    def deg2pix(self, deg):
+        lat,lon = deg
+        
+        zl = 2**((self.zoom+8))/360
+        
+        slat = self.screen_bounds[0]
+        slon = self.screen_bounds[3]
+        y = math.degrees(secint(lat, slat)) * zl
+        x = (lon-slon) *zl
+        return(x,y)
+    
+    def make_preview(self, size, bounds):
+        self.screen_size = size
+        self.selection_bounds = bounds
+    
+        self.autozoom()
+        tiles,grid = self.find_needed_tiles()
+        
+        self.render_basemap(tiles,grid)
+        
+        self.crop()
+        self.draw_bounding_box()
+        
+        return self.map
+    
+    def draw_bounding_box(self):
+        N,S,E,W = self.selection_bounds
+        
+        Wpix,Npix = self.deg2pix((N,W))
+        Epix,Spix = self.deg2pix((S,E))
+        
+        svg = '<svg width="%d" height="%d">' % (self.map.width, self.map.height)
+        svg += '<path d="M0,0  h%d v%d h-%d z ' % (self.map.width, self.map.height, self.map.width)
+        svg +='M%d,%d v%d h%d v-%d z" ' % (Wpix,Npix,Spix-Npix, Epix-Wpix, Spix-Npix)
+        svg += 'stroke="black" fill="grey" fill-opacity="0.3"   />' 
+        svg += '</svg>'
+        # print(svg)
+        overlay = pyvips.Image.svgload_buffer(bytes(svg, 'utf-8'))
+       
+        self.map = self.map.composite2(overlay, 'over')
+    
+    def render_basemap(self,tiles,grid):
+        xTiles,yTiles = grid
+        needed_tiles = self.tileCache.not_cached_tiles(tiles)
+        for tile in needed_tiles:
+            self.tileCache.add_tile(tile,self.fetch_tile(tile))
+        if self.tileCache.stich_tiles != tiles:
+            tiles.sort(key = col_major)
+            images_tiles = [self.tileCache.tiles[tile] for tile in tiles]
+
+            self.tileCache.stich = pyvips.Image.arrayjoin(images_tiles, across = xTiles)
+            self.tileCache.stich_tiles = tiles
+            
+        self.map = self.tileCache.stich
+        
+        zoom,x,y = tiles[0]
+        N,W = num2deg(x,y,zoom)
+        zoom,x,y = tiles[-1]
+        S,E = num2deg(x+1, y+1, zoom)
+        
+        self.map_bounds = (N,S,E,W)
+       
+        # tileCache.stich.write_to_file("stich.png")
+    
+    def find_needed_tiles(self):
+        xSize,ySize = self.screen_size
+        jump = self.tilesize
+        
+        tiles = []
+        for x in range(0, xSize, jump):
+            for y in range(0, ySize,jump):
+                N,W = self.pix2deg((x,y))
+                xtile,ytile = deg2num(N,W,self.zoom)
+                tiles.append((self.zoom,xtile,ytile))     
+
+        grid = (xSize//jump + 1, ySize//jump + 1)      
+        return tiles,grid      
+    
+    def crop(self):        
+        width,height = self.screen_size
+        mN,mS,mE,mW = self.map_bounds
+        sN,sS,sE,sW = self.screen_bounds
+        slN,slS,slE,slW = self.selection_bounds
+        
+        
+        xofst,yofst = self.deg2pix((mS,mW))
+        xofst = round(xofst)
+        yofst = 0
+        
+        pN,pW = self.deg2pix((slN,slW))
+        pS,pE = self.deg2pix((slS,slE))
+        
+        print(self.screen_size)
+        print(self.map.width,self.map.height)
+        print(xofst,yofst)
+
+        self.map = self.map.crop(-xofst, -yofst, width, height)
+    
+    #find zoom level for selection automatically
+    def autozoom(self):
+        xSize,ySize = self.screen_size
+        N,S,E,W = self.selection_bounds
+        ##determine zoom
+        zx = math.log2(xSize / (E - W))
+        zy = math.log2(ySize / (math.sin(math.radians(N)) - math.sin(math.radians(S))))
+        
+        zoom = min(zx,zy)
+        zoom = math.floor(zoom-0.2)
+        ##############
+        ##get screen bounds
+        width,height = self.screen_size
+        
+        zl = 2**(-(zoom+8))*360
+        
+        sN = N
+        sS = ifsecint(math.radians(-height*zl), sN)
+        sE = (E + W + width*zl)/2
+        sW = (E + W - width*zl)/2
+        #############
+        self.screen_bounds = (sN,sS,sE,sW)
+        self.zoom = zoom
+
+    def fetch_tile(self, tile):
+        # if tile[2] == 'OOB':
+            # url_string = "https://tile.openstreetmap.org/3/2/7.png"
+        # else:
+            # url_string = "https://tile.openstreetmap.org/%d/%d/%d.png" % tile 
+        # print(url_string)
+        # img_data = requests.get(url_string).content
+        # tile_data = pyvips.Image.pngload_buffer(img_data)
+        
+        ###debug
+        tile_data = pyvips.Image.new_from_file('test.png')
+        text = pyvips.Image.text("z:%d\nx:%d\ny:%d" % tile, width = 256, height = 256, dpi = 100)[0]
+        tile_data = tile_data.composite2(text, 'over')
+        tile_data = tile_data.draw_rect([127], 0,0,256,256)
+        # tile_data.write_to_file('a.png')
+        ###
+        return tile_data
+
 
 
 if __name__ == "__main__":
-    print(sec_integral(-30,0))
-    # make_preview(-37,-38,144,146)
+    pass
+    
+
+def sec_integrals_unit_test():
+    for b in range(-89, 89):
+        for a in range(-89,89):
+            v = secint(a,b)
+            ia = iisecint(v,b)
+            ib = ifsecint(v,a)
+            # print(math.isclose(ib,b))
+            if not math.isclose(ia,a, abs_tol = 1E-12):
+                print(ia,a,"error")
+            if not math.isclose(ib,b, abs_tol = 1E-12):
+                print(ib,b,"error")
