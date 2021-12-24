@@ -1,6 +1,7 @@
 import math
 import requests
 import pyvips
+import itertools
 
 def sectan(z):
     v = (1/math.cos(z)) + math.tan(z)
@@ -184,13 +185,24 @@ class SlippyMap():
         jump = self.tilesize
         
         tiles = []
-        for x in range(0, xSize, jump):
-            for y in range(0, ySize,jump):
-                N,W = self.pix2deg((x,y))
-                xtile,ytile = deg2num(N,W,self.zoom)
-                tiles.append((self.zoom,xtile,ytile))     
-
-        grid = (xSize//jump + 1, ySize//jump + 1)      
+        
+        xords = itertools.chain(range(0, xSize, jump),[xSize])
+        yords = itertools.chain(range(0, ySize,jump), [ySize])
+        
+        coords = itertools.product(xords,yords)
+        
+        for x,y in coords:                
+            N,W = self.pix2deg((x,y))
+            xtile,ytile = deg2num(N,W,self.zoom)
+            newtile = (self.zoom,xtile,ytile)
+            if newtile not in tiles:
+                tiles.append(newtile) 
+        
+        xs = {x for z,x,y in tiles}
+        ys = {y for z,x,y in tiles}
+        
+        grid = (len(xs),len(ys))    
+        print(grid)
         return tiles,grid      
     
     def crop(self):        
@@ -207,9 +219,6 @@ class SlippyMap():
         pN,pW = self.deg2pix((slN,slW))
         pS,pE = self.deg2pix((slS,slE))
         
-        print(self.screen_size)
-        print(self.map.width,self.map.height)
-        print(xofst,yofst)
 
         self.map = self.map.crop(-xofst, -yofst, width, height)
     
