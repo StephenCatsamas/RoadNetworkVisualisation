@@ -58,18 +58,65 @@ class SpinCtrlDoubleAdpt(wx.SpinCtrlDouble):
             p -= 1;
         return p
 
-
+class MapSelectionDraggable(wx.Panel):
+    def __init__(self, bitmap, corner, *args, **kwargs):
+        wx.Panel.__init__(self)
+        self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
+        self.Create(*args, **kwargs)
+        
+        self.bitmap = bitmap
+        self.corner = corner
+        
+        self.Bind( wx.EVT_LEFT_DOWN, self.dragstart)
+        self.Bind( wx.EVT_LEFT_UP, self.dragend)
+        self.Bind( wx.EVT_MOTION, self.drag)    
+        self.Bind( wx.EVT_PAINT, self.paint)        
+        self.cursor = (0,0)
+    
+    def paint(self, event):
+        dc = wx.BufferedPaintDC(self)   
+        dc.DrawBitmap(self.bitmap, 0,0)
+    
+    def dragstart(self, event):
+        self.cursor = event.GetPosition()
+        wx.Window.CaptureMouse(self)
+    def dragend(self, event):
+        wx.Window.ReleaseMouse(self)
+     
+    def drag(self, event):
+        if event.Dragging():
+            oldpos = self.GetPosition()
+            pos = event.GetPosition()
+            
+            newpos = pos+oldpos-self.cursor
+            
+            self.SetPosition(newpos)
+            self.GetParent().slippy.setselectionpix(newpos, self.corner)
+            self.GetParent().slippy.rezoom = False
+            self.GetParent().Refresh()
+            
+            
+    
 class MapPanel(wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
-        self.slippy = uiMapPreview.SlippyMap(self)
+        self.mousepos = (0,0)
+        
+        selection_bounds = (-37.5,-38.5,145.5,144.5)
+        
+        self.slippy = uiMapPreview.SlippyMap(self, selection_bounds)
         self.Bind( wx.EVT_PAINT, self.paint_map)
         self.Bind( wx.EVT_SIZE , self.map_resize)
         self.Bind( wx.EVT_MOUSEWHEEL, self.zoom)
         self.Bind( wx.EVT_LEFT_DOWN, self.dragstart)
         self.Bind( wx.EVT_MOTION, self.drag)
+
+        self.buttonbmp = wx.Bitmap('button.png', wx.BITMAP_TYPE_PNG)
+
+        self.dragNW = MapSelectionDraggable(self.buttonbmp, 'NW', self, wx.ID_ANY, size = self.buttonbmp.GetSize())
+        self.dragSE = MapSelectionDraggable(self.buttonbmp, 'SE', self, wx.ID_ANY, size = self.buttonbmp.GetSize())
         
-        self.mousepos = (0,0)
+        
         
     def dragstart(self, event):
         self.mousepos = event.GetPosition()
@@ -85,10 +132,11 @@ class MapPanel(wx.Panel):
             self.Refresh()
     
     def zoom(self,event):
+        pos = event.GetPosition()
         if(event.GetWheelRotation() > 0):
-            self.slippy.zoom_in()
+            self.slippy.zoomupdate(1, pos)
         if(event.GetWheelRotation() < 0):
-            self.slippy.zoom_out()
+            self.slippy.zoomupdate(-1,pos)
         self.slippy.rezoom = False
         self.Refresh()
       
@@ -100,21 +148,30 @@ class MapPanel(wx.Panel):
         bitmap = self.preview_map()
         dc = wx.PaintDC(self)
         dc.DrawBitmap(bitmap, 0,0)
+        
+        Np,Sp,Ep,Wp = self.slippy.getselectionpix()
+        
+        NWp = (round(Wp-4),round(Np-4))
+        SEp = (round(Ep-4),round(Sp-4))
+        self.dragNW.SetPosition(NWp)
+        self.dragSE.SetPosition(SEp)
+        
 
     def preview_map(self):    
         size = self.GetSize()
         parent = self.GetParent()
-        bounds = (float(parent.args_dict[id(parent.north)]), 
-            float(parent.args_dict[id(parent.south)]), 
-            float(parent.args_dict[id(parent.east)]), 
-            float(parent.args_dict[id(parent.west)]))
+        
+        # bounds = (float(parent.args_dict[id(parent.north)]), 
+            # float(parent.args_dict[id(parent.south)]), 
+            # float(parent.args_dict[id(parent.east)]), 
+            # float(parent.args_dict[id(parent.west)]))
             
-        map_img = self.slippy.make_preview(size, bounds)
+        map_img = self.slippy.make_preview(size)
         dat = map_img.write_to_memory()
-        # bitmap = wx.Bitmap.FromBuffer(map_img.width,map_img.height,dat)
+
         bitmap = wx.Bitmap.FromBufferRGBA(map_img.width,map_img.height,dat)
         return bitmap
-        # self.map_view.SetBitmap(bitmap)
+
     
 
 class MainForm ( wx.Frame ):

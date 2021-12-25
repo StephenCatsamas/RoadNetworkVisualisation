@@ -152,16 +152,16 @@ class Fetcher():
 
 
 class SlippyMap():
-    def __init__(self, parent):
+    def __init__(self, parent, selection_bounds):
         self.tileCache = TileCache(parent)
         self.rezoom = True
         
-        
         #server thread
         # self.zoom
-        # self.screen_size
+        # self.screen_size = screen_size
         # self.screen_bounds
-        # self.selection_bounds
+        self.selection_bounds = selection_bounds
+        # self.autozoom()
         # self.map
         # self.map_bounds
         # self.tiles = []
@@ -198,27 +198,24 @@ class SlippyMap():
         y = math.degrees(secint(lat, slat)) * zl
         x = (lon-slon) *zl
         return(x,y)
-        
-    def zoom_in(self):
-        self.zoomupdate(1)
-        
-    
-    def zoom_out(self):
-        self.zoomupdate(-1)
-    
+            
     def zoomlimit(self):
         if self.zoom > 12:
             self.zoom = 12
         if self.zoom < 0:
             self.zoom = 0
     
-    def zoomupdate(self, dir):
-        self.zoom += dir
+    def zoomupdate(self, dir, pos):
+        print(pos)
+        
+        ref = self.pix2deg(pos)
     
         width,height = self.screen_size
         
-        sNc,sWc = self.pix2deg((0,0))
-        sSc,sEc = self.pix2deg((width,height))
+        self.zoom += dir
+        
+        sNc,sWc = self.pix2deg((0,0)-pos, ref)
+        sSc,sEc = self.pix2deg((width,height)-pos, ref)
         candidate_bounds = (sNc,sSc, sEc, sWc)
 
         if(self.validbounds(candidate_bounds)):
@@ -240,21 +237,51 @@ class SlippyMap():
             return False
         return True
     
+    def getselectionpix(self):
+        slN,slS,slE,slW = self.selection_bounds
+        
+        slWp,slNp = self.deg2pix((slN,slW))
+        slEp,slSp = self.deg2pix((slS,slE))
+        
+        return (slNp,slSp, slEp, slWp)
+            
+    def setselectionpix(self, pos, corner):
+        x,y = pos
+        
+        slNc, slSc, slEc, slWc = self.selection_bounds
+        
+        if corner == 'NW':
+            slNc,slWc = self.pix2deg((x,y))
+        elif corner == 'SE':
+            slSc,slEc = self.pix2deg((x,y))
+                
+        if slWc < -180:
+            slWc += 360
+            slEc += 360
+        if slWc > 180:
+            slWc -= 360
+            slEc -= 360
+                
+        candidate_bounds = (slNc,slSc, slEc, slWc)
+
+        if(self.validbounds(candidate_bounds)):
+            self.selection_bounds = candidate_bounds
+        else:
+            print("drag locked")
+        print(self.selection_bounds)
+    
     def drag(self,movement):
-        x,y = movement
         
         sN,sS,sE,sW = self.screen_bounds
         
-        sWp,sNp = self.deg2pix((sN,sW))
-        sEp,sSp = self.deg2pix((sS,sE))
+        NWp = self.deg2pix((sN,sW))
+        SEp = self.deg2pix((sS,sE))
         
-        sNp -= y
-        sSp -= y
-        sEp -= x
-        sWp -= x
+        NWp -= movement
+        SEp -= movement
         
-        sNc,sWc = self.pix2deg((sWp,sNp))
-        sSc,sEc = self.pix2deg((sEp,sSp))
+        sNc,sWc = self.pix2deg(NWp)
+        sSc,sEc = self.pix2deg(SEp)
                 
         if sWc < -180:
             sWc += 360
@@ -270,9 +297,8 @@ class SlippyMap():
         else:
             print("scroll locked")
         
-    def make_preview(self, size, bounds):
+    def make_preview(self, size):
         self.screen_size = size
-        self.selection_bounds = bounds
     
         if self.rezoom:
             self.autozoom()
