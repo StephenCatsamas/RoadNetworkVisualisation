@@ -233,8 +233,8 @@ class SlippyMap():
         xSize,ySize = self.screen_size
         N,S,E,W = self.selection_bounds
         ##determine zoom
-        zx = math.log2(xSize / (E - W))
-        zy = math.log2(ySize / (math.sin(math.radians(N)) - math.sin(math.radians(S))))
+        zx = math.log2((360/256) * (xSize / (E - W)))
+        zy = math.log2((360/256) * (ySize / math.degrees(secint(S,N))))
         
         zoom = min(zx,zy)
         zoom = math.floor(zoom-0.2)
