@@ -152,15 +152,15 @@ class Fetcher():
 
 
 class SlippyMap():
-    def __init__(self, parent, selection_bounds):
+    def __init__(self, parent):
         self.tileCache = TileCache(parent)
         self.rezoom = True
         
         #server thread
         # self.zoom
-        # self.screen_size = screen_size
+        # self.screen_size
         # self.screen_bounds
-        self.selection_bounds = selection_bounds
+        # self.selection_bounds
         # self.autozoom()
         # self.map
         # self.map_bounds
