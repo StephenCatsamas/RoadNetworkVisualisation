@@ -2,6 +2,9 @@ import math
 import requests
 import pyvips
 import itertools
+import threading
+from queue import Queue,Empty
+import time
 
 def sectan(z):
     v = (1/math.cos(z)) + math.tan(z)
@@ -60,39 +63,89 @@ def num2deg(xtile, ytile, zoom):
   return (lat_deg, lon_deg)
 
 class TileCache():
-    def __init__(self):
+    def __init__(self, parent):
         self.tiles = {}
+        self.fetcher = Fetcher(parent)
         self.tile_queue = []
-        self.stich_tiles = None
-        self.stich = None
+        ##maybe in we need more performance we will also cache the sitch
+        # self.stich_tiles = None
+        # self.stich = None
         self.max_cache_size = 256
+        
+        self.loading_tile = pyvips.Image.new_from_file('loadingtile.png')
     
-    def add_tile(self,tile,tile_data):
+    def add_tile(self,tile,tilecont):
         self.tile_queue.append(tile)
-        self.tiles[tile] = tile_data
+        self.tiles[tile] = tilecont
         if len(self.tile_queue) >= self.max_cache_size:
             remove = self.tile_queue.pop(0)
             self.tiles.pop(remove)
+    
+    def get_tile(self,tile):
+        if self.recieved(tile):
+            return self.tiles[tile][1]
+        if not self.requesting(tile):
+            self.request(tile)
+        return self.loading_tile
+    
+    def request(self,tile):
+        self.fetcher.inbox.put(tile)
+        if not self.fetcher.thread.is_alive():
+            self.fetcher.thread.start()
+        self.add_tile(tile, ('requested', None))
+
+    def requesting(self, tile):
+        if tile in self.tiles:
+            status = self.tiles[tile][0]
+            return True if status == 'requested' else False
+        return False
+    
+    def recieved(self, tile):
+        while(not self.fetcher.outbox.empty()):
+            tilecont = self.fetcher.outbox.get_nowait()
+            self.add_tile(tilecont[0],('recieved',tilecont[1]))
+    
+        if tile in self.tiles:
+            status = self.tiles[tile][0]
+            if status == 'recieved':
+                return True          
+        return False
             
-    def not_cached_tiles(self, tiles):
-        return [tile for tile in tiles if tile not in self.tiles]
+    def uncached_tiles(self, tiles):
+        return [tile for tile in tiles if tile not in self.tiles]  
+
+class Fetcher():
+    def __init__(self, parent):
+        self.inbox = Queue()
+        self.outbox = Queue()
+        self.thread = threading.Thread(target=self.fetch, daemon = True)
+        self.map = parent
         
-def make_preview(size,bounds):
-       
-    z,x,y = tiles[0]
-    iN,iW = num2deg(x,y,z)
-    iS,iE = num2deg(x+xTiles,y+yTiles,z)
-    
-    stich,selection_bounds = draw_bounding_box(tileCache.stich, bounds, (iN,iS,iE,iW))
-    return stich,selection_bounds
-    
-
-
+        
+    def fetch(self):
+        while True:
+            while not self.inbox.empty():
+                tile = self.inbox.get_nowait()
+                
+                if tile[2] == 'OOB':
+                    url_string = "https://tile.openstreetmap.org/3/2/7.png"
+                else:
+                    url_string = "https://tile.openstreetmap.org/%d/%d/%d.png" % tile 
+                print(url_string)
+                img_data = requests.get(url_string).content
+                tile_data = pyvips.Image.pngload_buffer(img_data)
+                self.outbox.put((tile,tile_data))
+                self.map.Refresh()
+            time.sleep(1/16)
 
 
 class SlippyMap():
-    def __init__(self):
-        self.tileCache = TileCache()
+    def __init__(self, parent):
+        self.tileCache = TileCache(parent)
+        
+        
+        
+        #server thread
         # self.zoom
         # self.screen_size
         # self.screen_bounds
@@ -166,17 +219,11 @@ class SlippyMap():
     
     def render_basemap(self,tiles,grid):
         xTiles,yTiles = grid
-        needed_tiles = self.tileCache.not_cached_tiles(tiles)
-        for tile in needed_tiles:
-            self.tileCache.add_tile(tile,self.fetch_tile(tile))
-        if self.tileCache.stich_tiles != tiles:
-            tiles.sort(key = col_major)
-            images_tiles = [self.tileCache.tiles[tile] for tile in tiles]
-
-            self.tileCache.stich = pyvips.Image.arrayjoin(images_tiles, across = xTiles)
-            self.tileCache.stich_tiles = tiles
-            
-        self.map = self.tileCache.stich
+   
+        tiles.sort(key = col_major)
+        image_tiles = [self.tileCache.get_tile(tile) for tile in tiles]
+        
+        self.map = pyvips.Image.arrayjoin(image_tiles, across = xTiles)
         
         zoom,x,y = tiles[0]
         N,W = num2deg(x,y,zoom)
@@ -218,9 +265,9 @@ class SlippyMap():
         slN,slS,slE,slW = self.selection_bounds
         
         
-        xofst,yofst = self.deg2pix((mS,mW))
+        xofst,yofst = self.deg2pix((mN,mW))
         xofst = round(xofst)
-        yofst = 0
+        yofst = round(yofst)
         
         pN,pW = self.deg2pix((slN,slW))
         pS,pE = self.deg2pix((slS,slE))
@@ -261,23 +308,16 @@ class SlippyMap():
         self.screen_bounds = (sN,sS,sE,sW)
 
 
-    def fetch_tile(self, tile):
-        # if tile[2] == 'OOB':
-            # url_string = "https://tile.openstreetmap.org/3/2/7.png"
-        # else:
-            # url_string = "https://tile.openstreetmap.org/%d/%d/%d.png" % tile 
-        # print(url_string)
-        # img_data = requests.get(url_string).content
-        # tile_data = pyvips.Image.pngload_buffer(img_data)
+    # def fetch_tile(self, tile):
+        # self.fetcher.inbox.put(tile)
         
-        ###debug
-        tile_data = pyvips.Image.new_from_file('test.png')
-        text = pyvips.Image.text("z:%d\nx:%d\ny:%d" % tile, width = 256, height = 256, dpi = 100)[0]
-        tile_data = tile_data.composite2(text, 'over')
-        tile_data = tile_data.draw_rect([127], 0,0,256,256)
-        # tile_data.write_to_file('a.png')
-        ###
-        return tile_data
+        # ##return waiting data
+        # tile_data = pyvips.Image.new_from_file('test.png')
+        # text = pyvips.Image.text("z:%d\nx:%d\ny:%d" % tile, width = 256, height = 256, dpi = 100)[0]
+        # tile_data = tile_data.composite2(text, 'over')
+        # tile_data = tile_data.draw_rect([127], 0,0,256,256)
+
+        # return tile_data
 
 
 

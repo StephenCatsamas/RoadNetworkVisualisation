@@ -212,7 +212,7 @@ class MainForm ( wx.Frame ):
         self.map_view.SetBackgroundStyle(wx.BG_STYLE_PAINT)
 
         bSizermain.Add( self.map_view, 1, wx.EXPAND | wx.ALL, 5 )
-        self.slippy = uiMapPreview.SlippyMap()
+        self.slippy = uiMapPreview.SlippyMap(self.map_view)
 
         # self.SetSizer( bSizer2 )
         self.SetSizer( bSizermain )
