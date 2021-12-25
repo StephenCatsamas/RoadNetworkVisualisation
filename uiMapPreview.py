@@ -3,7 +3,7 @@ import requests
 import pyvips
 import itertools
 import threading
-from queue import Queue,Empty
+from queue import Queue,LifoQueue
 import time
 
 def sectan(z):
@@ -51,7 +51,7 @@ def col_major(tile):
 def deg2num(lat_deg, lon_deg, zoom):
   lat_rad = math.radians(lat_deg)
   n = 2.0 ** zoom
-  xtile = int((lon_deg + 180.0) / 360.0 * n)
+  xtile = math.floor((lon_deg + 180.0) / 360.0 * n)
   ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
   return (xtile, ytile)
 
@@ -75,15 +75,34 @@ class TileCache():
         self.loading_tile = pyvips.Image.new_from_file('loadingtile.png')
     
     def add_tile(self,tile,tilecont):
-        self.tile_queue.append(tile)
+        if tile not in self.tile_queue:
+            self.tile_queue.append(tile)
         self.tiles[tile] = tilecont
         if len(self.tile_queue) >= self.max_cache_size:
             remove = self.tile_queue.pop(0)
             self.tiles.pop(remove)
-    
+            
+    def badtile(self,tile):
+        z,x,y = tile
+        numtiles = 2**z
+        if (0 <= x < numtiles) and (0 <= y < numtiles):
+            return False
+        else:
+            return True
+   
+    def tilemod(self,tile):
+        z,x,y = tile
+        
+        x = x % 2**z
+        return (z,x,y)
+   
     def get_tile(self,tile):
+        tile = self.tilemod(tile)
+    
         if self.recieved(tile):
             return self.tiles[tile][1]
+        if self.badtile(tile):
+            return self.loading_tile
         if not self.requesting(tile):
             self.request(tile)
         return self.loading_tile
@@ -116,33 +135,26 @@ class TileCache():
 
 class Fetcher():
     def __init__(self, parent):
-        self.inbox = Queue()
+        self.inbox = LifoQueue()#issue the bottom will fill up with very old tiles which we no longer need
         self.outbox = Queue()
         self.thread = threading.Thread(target=self.fetch, daemon = True)
         self.map = parent
-        
-        
+    
     def fetch(self):
         while True:
-            while not self.inbox.empty():
-                tile = self.inbox.get_nowait()
-                
-                if tile[2] == 'OOB':
-                    url_string = "https://tile.openstreetmap.org/3/2/7.png"
-                else:
-                    url_string = "https://tile.openstreetmap.org/%d/%d/%d.png" % tile 
-                print(url_string)
-                img_data = requests.get(url_string).content
-                tile_data = pyvips.Image.pngload_buffer(img_data)
-                self.outbox.put((tile,tile_data))
-                self.map.Refresh()
-            time.sleep(1/16)
+            tile = self.inbox.get()
+            url_string = "https://tile.openstreetmap.org/%d/%d/%d.png" % tile 
+            print(url_string)
+            img_data = requests.get(url_string).content
+            tile_data = pyvips.Image.pngload_buffer(img_data)
+            self.outbox.put((tile,tile_data))
+            self.map.Refresh()
 
 
 class SlippyMap():
     def __init__(self, parent):
         self.tileCache = TileCache(parent)
-        
+        self.rezoom = True
         
         
         #server thread
@@ -186,12 +198,85 @@ class SlippyMap():
         y = math.degrees(secint(lat, slat)) * zl
         x = (lon-slon) *zl
         return(x,y)
+        
+    def zoom_in(self):
+        self.zoomupdate(1)
+        
     
+    def zoom_out(self):
+        self.zoomupdate(-1)
+    
+    def zoomlimit(self):
+        if self.zoom > 12:
+            self.zoom = 12
+        if self.zoom < 0:
+            self.zoom = 0
+    
+    def zoomupdate(self, dir):
+        self.zoom += dir
+    
+        width,height = self.screen_size
+        
+        sNc,sWc = self.pix2deg((0,0))
+        sSc,sEc = self.pix2deg((width,height))
+        candidate_bounds = (sNc,sSc, sEc, sWc)
+
+        if(self.validbounds(candidate_bounds)):
+            self.screen_bounds = candidate_bounds
+        else:
+            self.zoom -= dir
+            print("zoom locked")
+            
+        self.zoomlimit()
+    
+    def validbounds(self, bounds):
+        N,S,E,W = bounds
+        
+        maxlat = math.degrees(math.atan(math.sinh(math.pi)))
+        
+        if N > maxlat:
+            return False
+        if S < -maxlat:
+            return False
+        return True
+    
+    def drag(self,movement):
+        x,y = movement
+        
+        sN,sS,sE,sW = self.screen_bounds
+        
+        sWp,sNp = self.deg2pix((sN,sW))
+        sEp,sSp = self.deg2pix((sS,sE))
+        
+        sNp -= y
+        sSp -= y
+        sEp -= x
+        sWp -= x
+        
+        sNc,sWc = self.pix2deg((sWp,sNp))
+        sSc,sEc = self.pix2deg((sEp,sSp))
+                
+        if sWc < -180:
+            sWc += 360
+            sEc += 360
+        if sWc > 180:
+            sWc -= 360
+            sEc -= 360
+                
+        candidate_bounds = (sNc,sSc, sEc, sWc)
+
+        if(self.validbounds(candidate_bounds)):
+            self.screen_bounds = candidate_bounds
+        else:
+            print("scroll locked")
+        
     def make_preview(self, size, bounds):
         self.screen_size = size
         self.selection_bounds = bounds
     
-        self.autozoom()
+        if self.rezoom:
+            self.autozoom()
+        
         tiles,grid = self.find_needed_tiles()
         
         self.render_basemap(tiles,grid)
@@ -247,7 +332,9 @@ class SlippyMap():
         
         for x,y in coords:                
             N,W = self.pix2deg((x,y))
+           
             xtile,ytile = deg2num(N,W,self.zoom)
+            
             newtile = (self.zoom,xtile,ytile)
             if newtile not in tiles:
                 tiles.append(newtile) 
@@ -287,6 +374,7 @@ class SlippyMap():
         zoom = math.floor(zoom-0.2)
         
         self.zoom = zoom
+        self.zoomlimit()
         ##############
         ##get screen bounds
         width,height = self.screen_size

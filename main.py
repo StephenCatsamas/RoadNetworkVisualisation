@@ -20,40 +20,102 @@ class SpinCtrlDoubleAdpt(wx.SpinCtrlDouble):
         self.increment = self.GetIncrement()
         self.previous = self.GetValue()
         self.Bind(wx.EVT_MOUSEWHEEL, self.spinbox_scroll)
-        self.Bind(wx.EVT_SPINCTRLDOUBLE, self.checkIncrement)
 
     def spinbox_increment(self, dir):
+        self.checkIncrement()
+    
         val = self.GetValue()
         val += dir*self.GetIncrement()
         self.SetValue(val)
-        wx.PostEvent(self.GetEventHandler(), wx.PyCommandEvent(wx.EVT_SPINCTRLDOUBLE.typeId, self.GetId()))
+        
     
     def spinbox_scroll(self,event):
         if(event.GetWheelRotation() > 0):
             self.spinbox_increment(1)
         if(event.GetWheelRotation() < 0):
             self.spinbox_increment(-1)
+        event.Skip()
 
 
-    def checkIncrement(self, event):
-        print('aa')
+    def checkIncrement(self):
         val = self.GetValue()
-        inc_p = get10pow(self.increment)
-        val_p = get10pow(val)
-        pre_p = get10pow(self.previous)
-        
+        inc_p = self.get10pow(self.increment)
+        val_p = self.get10pow(val)
+        pre_p = self.get10pow(self.previous)
         if(pre_p != inc_p and val_p != inc_p):
-            self.increment(10**inc_p)
+            self.increment = 10**inc_p
             self.SetIncrement(self.increment)
         self.previous = val
-        event.Skip()
         
         
     def get10pow(self, a):
-        p = round(math.log10(a)+1)
+        a = abs(a)
+        if a != 0:
+            p = round(math.log10(a)+1)
+        else:
+            p = self.increment
         while(math.modf(a*(10**(-p)))[0] != 0):
             p -= 1;
         return p
+
+
+class MapPanel(wx.Panel):
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
+        self.slippy = uiMapPreview.SlippyMap(self)
+        self.Bind( wx.EVT_PAINT, self.paint_map)
+        self.Bind( wx.EVT_SIZE , self.map_resize)
+        self.Bind( wx.EVT_MOUSEWHEEL, self.zoom)
+        self.Bind( wx.EVT_LEFT_DOWN, self.dragstart)
+        self.Bind( wx.EVT_MOTION, self.drag)
+        
+        self.mousepos = (0,0)
+        
+    def dragstart(self, event):
+        self.mousepos = event.GetPosition()
+        
+    def drag(self, event):
+        if event.Dragging():
+            newpos = event.GetPosition()
+            move = newpos - self.mousepos
+            self.mousepos = newpos
+            
+            self.slippy.drag(move)
+            self.slippy.rezoom = False
+            self.Refresh()
+    
+    def zoom(self,event):
+        if(event.GetWheelRotation() > 0):
+            self.slippy.zoom_in()
+        if(event.GetWheelRotation() < 0):
+            self.slippy.zoom_out()
+        self.slippy.rezoom = False
+        self.Refresh()
+      
+    def map_resize(self,event):
+        self.slippy.rezoom = True
+        self.Refresh()
+        
+    def paint_map(self, event):
+        bitmap = self.preview_map()
+        dc = wx.PaintDC(self)
+        dc.DrawBitmap(bitmap, 0,0)
+
+    def preview_map(self):    
+        size = self.GetSize()
+        parent = self.GetParent()
+        bounds = (float(parent.args_dict[id(parent.north)]), 
+            float(parent.args_dict[id(parent.south)]), 
+            float(parent.args_dict[id(parent.east)]), 
+            float(parent.args_dict[id(parent.west)]))
+            
+        map_img = self.slippy.make_preview(size, bounds)
+        dat = map_img.write_to_memory()
+        # bitmap = wx.Bitmap.FromBuffer(map_img.width,map_img.height,dat)
+        bitmap = wx.Bitmap.FromBufferRGBA(map_img.width,map_img.height,dat)
+        return bitmap
+        # self.map_view.SetBitmap(bitmap)
+    
 
 class MainForm ( wx.Frame ):
 
@@ -207,20 +269,21 @@ class MainForm ( wx.Frame ):
         bSizer2.Add( confSizer, 0, wx.EXPAND, 5 )
         bSizermain.Add( bSizer2, 0, wx.EXPAND, 5 )
 
-        self.map_view = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 400,400 ), wx.TAB_TRAVERSAL)
+        self.map_view = MapPanel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 400,400 ), wx.TAB_TRAVERSAL)
         self.map_view.SetMinSize( wx.Size( 400,400 ) )
         self.map_view.SetBackgroundStyle(wx.BG_STYLE_PAINT)
-
+        
+        # self.map_view.Bind(wx.EVT_LEFT_DOWN, self.left_click)
+        
         bSizermain.Add( self.map_view, 1, wx.EXPAND | wx.ALL, 5 )
-        self.slippy = uiMapPreview.SlippyMap(self.map_view)
+                
+       
 
         # self.SetSizer( bSizer2 )
         self.SetSizer( bSizermain )
         self.Layout()
 
         self.Centre( wx.BOTH )
-
-
 
         # Connect Events
         self.north.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.north) )
@@ -237,8 +300,7 @@ class MainForm ( wx.Frame ):
         self.cancel_button.Bind( wx.EVT_BUTTON, lambda a : exit() )
         self.restore_button.Bind( wx.EVT_BUTTON, lambda a : self.restore_options() )
         
-        self.map_view.Bind( wx.EVT_PAINT, self.paint_map )
-        self.map_view.Bind( wx.EVT_SIZE , self.map_resize)
+        
 
         
         #list of widgets
@@ -274,18 +336,6 @@ class MainForm ( wx.Frame ):
 
         #load current values
         self.load_options()
-    
-    def spinbox_increment(self, spinbox, dir):
-        val = spinbox.GetValue()
-        val += dir*spinbox.GetIncrement()
-        spinbox.SetValue(val)
-        self.update_args()
-    
-    def spinbox_scroll(self,event, spinbox):
-        if(event.GetWheelRotation() > 0):
-            self.spinbox_increment(spinbox, 1)
-        if(event.GetWheelRotation() < 0):
-            self.spinbox_increment(spinbox, -1)  
 
     def __del__( self ):
         pass
@@ -369,30 +419,7 @@ class MainForm ( wx.Frame ):
             except KeyError:
                 pass
         self.update_widgets('info')
-        event.Skip()
      
-    def map_resize(self,event):
-        self.map_view.Refresh()
-        
-    def paint_map(self, event):
-        bitmap = self.preview_map()
-        dc = wx.PaintDC(self.map_view)
-        dc.DrawBitmap(bitmap, 0,0)
-
-    def preview_map(self):    
-        size = self.map_view.GetSize()
-        bounds = (float(self.args_dict[id(self.north)]), 
-            float(self.args_dict[id(self.south)]), 
-            float(self.args_dict[id(self.east)]), 
-            float(self.args_dict[id(self.west)]))
-            
-        map_img = self.slippy.make_preview(size, bounds)
-        dat = map_img.write_to_memory()
-        # bitmap = wx.Bitmap.FromBuffer(map_img.width,map_img.height,dat)
-        bitmap = wx.Bitmap.FromBufferRGBA(map_img.width,map_img.height,dat)
-        return bitmap
-        # self.map_view.SetBitmap(bitmap)
-
     def update_widgets(self,widget = None):
 
         self.map_view.Refresh()
