@@ -1,5 +1,6 @@
 import wx
 import wx.xrc
+import wx.stc
 import csv
 import os
 import subprocess
@@ -8,18 +9,25 @@ import uiMapPreview
 import threading
 import math
 import pyvips
-
-# https://tile.openstreetmap.org/7/11/36.png
-
+from args import ArgsContainer
 
 
 class SpinCtrlDoubleAdpt(wx.SpinCtrlDouble):
     
     def __init__(self, *args, **kwargs):
         wx.SpinCtrl.__init__(self, *args, **kwargs)
-        self.increment = self.GetIncrement()
-        self.previous = self.GetValue()
-        self.Bind(wx.EVT_MOUSEWHEEL, self.spinbox_scroll)
+        # self.increment = self.GetIncrement()
+        # self.previous = self.GetValue()
+        self.Bind(wx.EVT_CHAR_HOOK, self.enter)
+        
+
+    def enter(self,event):
+        if event.GetKeyCode() in (wx.stc.STC_KEY_RETURN,370):#370 for numpad enter
+            self.GetParent().SetFocus()
+            self.SetFocus()
+        else:
+            event.Skip()
+        
 
     def spinbox_increment(self, dir):
         self.checkIncrement()
@@ -111,6 +119,7 @@ class MapSelectionDraggable(wx.Panel):
             
                 self.SetPosition(newpos)
                 self.GetParent().slippy.setselectionpix(newpos, self.corner)
+                self.GetParent().GetParent().mapupdate()
                 self.GetParent().slippy.rezoom = False
                 self.GetParent().Refresh()
             
@@ -121,9 +130,7 @@ class MapPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
         self.mousepos = (0,0)
         
-        selection_bounds = (-37.5,-38.5,145.5,144.5)
-        
-        self.slippy = uiMapPreview.SlippyMap(self, selection_bounds)
+        self.slippy = uiMapPreview.SlippyMap(self)
         self.Bind( wx.EVT_PAINT, self.paint_map)
         self.Bind( wx.EVT_SIZE , self.map_resize)
         self.Bind( wx.EVT_MOUSEWHEEL, self.zoom)
@@ -180,11 +187,6 @@ class MapPanel(wx.Panel):
         size = self.GetSize()
         parent = self.GetParent()
         
-        # bounds = (float(parent.args_dict[id(parent.north)]), 
-            # float(parent.args_dict[id(parent.south)]), 
-            # float(parent.args_dict[id(parent.east)]), 
-            # float(parent.args_dict[id(parent.west)]))
-            
         map_img = self.slippy.make_preview(size)
         dat = map_img.write_to_memory()
 
@@ -349,189 +351,93 @@ class MainForm ( wx.Frame ):
         self.map_view.SetMinSize( wx.Size( 400,400 ) )
         self.map_view.SetBackgroundStyle(wx.BG_STYLE_PAINT)
         
-        # self.map_view.Bind(wx.EVT_LEFT_DOWN, self.left_click)
-        
         bSizermain.Add( self.map_view, 1, wx.EXPAND | wx.ALL, 5 )
                 
        
-
-        # self.SetSizer( bSizer2 )
         self.SetSizer( bSizermain )
         self.Layout()
 
         self.Centre( wx.BOTH )
 
         # Connect Events
-        self.north.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.north) )
-        self.south.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.south) )
-        self.west.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.west) )
-        self.east.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.east) )
-        self.tile_res.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.tile_res) )
-        self.image_res.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.image_res) )
-        self.draw_width.Bind( wx.EVT_SPINCTRLDOUBLE, lambda a : self.update_args(self.draw_width) )
-        self.flush_cache_widg.Bind( wx.EVT_CHECKBOX, lambda a : self.update_args(self.flush_cache_widg) )
-        self.do_cull_widg.Bind( wx.EVT_CHECKBOX, lambda a : self.update_args(self.do_cull_widg) )
-        self.force_set_widg.Bind( wx.EVT_CHECKBOX, lambda a : self.update_args(self.force_set_widg) )
+        self.north.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
+        self.south.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
+        self.west.Bind( wx.EVT_SPINCTRLDOUBLE,  self.controlupdate)
+        self.east.Bind( wx.EVT_SPINCTRLDOUBLE,  self.controlupdate)
+        self.tile_res.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
+        self.image_res.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
+        self.draw_width.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
+        self.flush_cache_widg.Bind( wx.EVT_CHECKBOX, self.controlupdate)
+        self.do_cull_widg.Bind( wx.EVT_CHECKBOX, self.controlupdate)
+        self.force_set_widg.Bind( wx.EVT_CHECKBOX, self.controlupdate)
         self.ok_button.Bind( wx.EVT_BUTTON, lambda a : self.make_map() )
         self.cancel_button.Bind( wx.EVT_BUTTON, lambda a : exit() )
         self.restore_button.Bind( wx.EVT_BUTTON, lambda a : self.restore_options() )
         
+        #load defaults
+        self.initargs()
+        self.updatewidgets()
         
-
-        
-        #list of widgets
-        self.widgets = {self.north,self.south,self.west,self.east,self.tile_res,self.image_res,self.draw_width,self.flush_cache_widg,self.do_cull_widg,self.force_set_widg}
-        
-        #widget confic name dictionary
-        self.widgets_dict = {
-        'colour_mode': id(0),
-        'Nf': id(self.north),
-        'Sf': id(self.south),
-        'Ef': id(self.east),
-        'Wf': id(self.west),
-        'tile_size': id(self.tile_res),
-        'res': id(self.image_res),
-        'sef_width': id(self.draw_width),
-        'flush_map_cache': id(self.flush_cache_widg),
-        'do_cull': id(self.do_cull_widg),
-        'force_seg': id(self.force_set_widg),
-        'seg_width': id(1),
-        'threads': id(2),
-        'mapPullOutPath' : id(3),
-        'mapStreetInPath': id(4),
-        'mapStreetOutPath': id(5),
-        'mapSegInPath': id(6),
-        'mapSegOutPath': id(7),
-        'mapDrawInPath': id(8),
-        'mapDrawOutPath': id(9),
-        'mapGreyInPath': id(10),
-        'mapGreyOutPath': id(11),
-        'mapGrayMaskPath': id(12),
-        'mapConcatInPath': id(13),
-        'mapConcatOutPath': id(14)}
-
-        #load current values
-        self.load_options()
 
     def __del__( self ):
         pass
     
-    def read_options_file(self, fp):
-        dirname = os.path.dirname(__file__)
-        fp = os.path.join(dirname, fp)
-        with open(fp, 'r', newline='') as csvfile:
-            reader = csv.reader(csvfile, delimiter='=',
-                                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            self.arg_lines = {}
-            self.args_dict = {}
-            for i,row in enumerate(reader):
-                if row == []:
-                    continue
-                if row[0][0] == '#':
-                    continue
-                self.arg_lines[i] = row[0].strip()
-                try:
-                    self.args_dict[self.widgets_dict[row[0].strip()]] = row[1].strip()
-                except KeyError:
-                    pass
-                
-        self.update_widgets()       
-        
-    def load_options(self):
-        self.read_options_file('args_def.txt')
-
-    def restore_options(self):
-        self.read_options_file('args_lst.txt')
-    
     def make_map(self):
         self.save_options()
         work_thread = threading.Thread(target=map.run, args=[])
-        work_thread.start()        
-    
-    def save_options(self):
-        csv_rows = []
-        write_lines = {}
+        work_thread.start()    
+
+    def updatewidgets(self):
+        self.north.SetValue(self.args.Nf)
+        self.south.SetValue(self.args.Sf)
+        self.east.SetValue(self.args.Ef)
+        self.west.SetValue(self.args.Wf)
+        self.image_res.SetValue(self.args.res)
+        self.draw_width.SetValue(self.args.seg_width)
+        self.flush_cache_widg.SetValue(self.args.flush_map_cache)
+        self.do_cull_widg.SetValue(self.args.do_cull)
+        self.force_set_widg.SetValue(self.args.force_seg)
         
-        dirname = os.path.dirname(__file__)
-        fp = os.path.join(dirname, 'args_lst.txt')
-        with open(fp, 'r', newline='') as csvfile:
-            row = csv.reader(csvfile, delimiter='=',
-                                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            csv_rows.extend(row)
-
-        inv_widget_dict = {v: k for k, v in self.widgets_dict.items()}
-        for key,value in self.arg_lines.items():
-            print("value: " + value)
-            print("key: " + str(key))
-            print()
-            print(self.args_dict)
-            print()
-            print(self.widgets_dict)
-            print()
-            print(inv_widget_dict)
-            print()
-            write_lines[key] = [value, self.args_dict[self.widgets_dict[value]]]
         
-        dirname = os.path.dirname(__file__)
-        fp = os.path.join(dirname, 'args_lst.txt')
-        with open('args_lst.txt', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter='=',
-                                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            for line, row in enumerate(csv_rows):
-                 data = write_lines.get(line, row)
-
-                 writer.writerow(data)
-    
-    def update_args(self,widget = None):
-        if widget == None:
-            for widget in self.widgets:
-                try:
-                    self.args_dict[id(widget)] = widget.GetValue()
-                except KeyError:
-                    pass
-        else:
-            try:
-                self.args_dict[id(widget)] = widget.GetValue()
-            except KeyError:
-                pass
-        self.update_widgets('info')
-     
-    def update_widgets(self,widget = None):
-
+        delta_lat_str = str(round(self.args.Nf - self.args.Sf,3))
+        self.lat_delta_label.SetLabelMarkup( u"Latitude Δ: " + delta_lat_str + " deg")
+        
+        delta_lon_str = str(round(self.args.Ef - self.args.Wf,3))
+        self.lon_delta_label.SetLabelMarkup("Longitude Δ: " + delta_lon_str + " deg")
+        
+        n_tiles_str = str(int(math.ceil((self.args.Nf-self.args.Sf)/self.args.tile_size * math.ceil(self.args.Ef-self.args.Wf)/self.args.tile_size)))
+        self.n_tiles_label.SetLabel("Tiles: " + n_tiles_str)
+        
+        self.map_view.slippy.selection_bounds = (self.args.Nf,self.args.Sf,self.args.Ef,self.args.Wf)
+        
         self.map_view.Refresh()
+
+    def mapupdate(self):
+        self.args.Nf,self.args.Sf,self.args.Ef,self.args.Wf = self.map_view.slippy.selection_bounds
         
-        if widget == None:
-            for widget in self.widgets:
-                try:
-                    try:
-                        widget.SetValue(float(self.args_dict[id(widget)]))
-                    except ValueError:
-                        widget.SetValue(bool(self.args_dict[id(widget)]))
-                except KeyError:
-                    pass
-        elif widget == 'info':
-            try:
-                delta_lat_str = str(round(float(self.args_dict[id(self.north)])-float(self.args_dict[id(self.south)]),3))
-                self.lat_delta_label.SetLabel("Latitude Delta: " + delta_lat_str + " deg")
-            except TypeError:
-                pass
-            try:
-                delta_lon_str = str(round(float(self.args_dict[id(self.east)])-float(self.args_dict[id(self.west)]),3))
-                self.lon_delta_label.SetLabel("Longitude Delta: " + delta_lon_str + " deg")
-            except TypeError:
-                pass
-            try:
-                n_tiles_str = str(int(math.ceil((float(self.args_dict[id(self.north)])-float(self.args_dict[id(self.south)]))/float(self.args_dict[id(self.tile_res)])) * math.ceil((float(self.args_dict[id(self.east)])-float(self.args_dict[id(self.west)]))/float(self.args_dict[id(self.tile_res)]))))
-                self.n_tiles_label.SetLabel("Tiles: " + n_tiles_str)
-            except (ZeroDivisionError,TypeError):
-                pass
-            self.infoSizer.Layout()
-            
-        else:
-            try:
-                self.widget.SetLabel(self.args_dict[id(widget)])
-            except KeyError:
-                pass
+        self.updatewidgets()
+        
+
+    def controlupdate(self,event):
+        self.args.Nf = self.north.GetValue()
+        self.args.Sf = self.south.GetValue()
+        self.args.Ef = self.east.GetValue()
+        self.args.Wf = self.west.GetValue()
+        self.args.res = self.image_res.GetValue()
+        self.args.seg_width = self.draw_width.GetValue()
+        self.args.flush_map_cache = self.flush_cache_widg.GetValue()
+        self.args.do_cull = self.do_cull_widg.GetValue()
+        self.args.force_seg = self.force_set_widg.GetValue()
+        
+        self.map_view.slippy.rezoom = True
+        self.updatewidgets()
+        
+        
+    def initargs(self):
+        self.args = ArgsContainer()  
+        
+    def restore_options(self):
+        print('implement restoring options')
 
 if __name__ == "__main__":
     app = wx.App()

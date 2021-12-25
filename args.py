@@ -3,62 +3,26 @@ import os
 import csv
 
 class ArgsContainer():
-    def __init__(self,file = 'args_lst.txt'):
-        self.update_args(file = file)
+
+    def __init__(self,file = 'args_def.txt'):
+        self.load_args(file = file) 
         
-    def update_args(self,file = 'args_lst.txt'):
+    def load_args(self,file = 'args_lst.txt'):
         dirname = os.path.dirname(__file__)
         fp = os.path.join(dirname, file)
         with open(fp, 'r', newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter='=',
                                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            
-            args_dict = {}
+            self.filedict = {}
             for row in reader:
                 if row == []:
                     continue
                 if row[0][0] == '#':
                     continue
-                args_dict[row[0].strip()] = row[1].strip()
-
-        self.colour_mode = str(args_dict['colour_mode']).strip('"')
-
-        self.flush_map_cache = bool(args_dict['flush_map_cache'] == 'True')
-        self.do_cull = bool(args_dict['do_cull'] == 'True')
-        self.force_seg = bool(args_dict['force_seg'] == 'True')
-
-        self.Nf =  float(args_dict['Nf'])
-        self.Sf =  float(args_dict['Sf'])
-        self.Ef =  float(args_dict['Ef'])
-        self.Wf =  float(args_dict['Wf'])
-
-        self.tile_size = float(args_dict['tile_size'])
-
-        self.res = float(args_dict['res'])
-
-        self.seg_width = float(args_dict['seg_width'])
-
-        self.threads = int(args_dict['threads'])
-
-        self.mapPullOutPath = str(args_dict['mapPullOutPath']).strip('"')
-
-        self.mapStreetInPath = str(args_dict['mapStreetInPath']).strip('"')
-        self.mapStreetOutPath = str(args_dict['mapStreetOutPath']).strip('"')
-
-        self.mapSegInPath = str(args_dict['mapSegInPath']).strip('"')
-        self.mapSegOutPath = str(args_dict['mapSegOutPath']).strip('"')
-
-        self.mapDrawInPath = str(args_dict['mapDrawInPath']).strip('"')
-        self.mapDrawOutPath = str(args_dict['mapDrawOutPath']).strip('"')
-
-        self.mapGreyInPath = str(args_dict['mapGreyInPath']).strip('"')
-        self.mapGreyOutPath = str(args_dict['mapGreyOutPath']).strip('"')
-        self.mapGrayMaskPath = str(args_dict['mapGrayMaskPath']).strip('"')
-
-        self.mapConcatInPath = str(args_dict['mapConcatInPath']).strip('"')
-
-        self.mapConcatOutPath = str(args_dict['mapConcatOutPath']).strip('"')
-
+                self.filedict[row[0].strip()] = row[1].strip()
+                
+        self.dict2name()
+        
         #################################################################################
         self.blk = 1000
 
@@ -85,4 +49,44 @@ class ArgsContainer():
         self.S = int(math.floor(self.blk*round(self.Sf,3)))
         self.E = int(math.floor(self.blk*round(self.Ef,3)))
         self.W = int(math.floor(self.blk*round(self.Wf,3)))
+        
+    def dict2name(self):
+        self.colour_mode = str(self.filedict['colour_mode']).strip('"')
+
+        self.flush_map_cache = bool(self.filedict['flush_map_cache'] == 'True')
+        self.do_cull = bool(self.filedict['do_cull'] == 'True')
+        self.force_seg = bool(self.filedict['force_seg'] == 'True')
+
+        self.Nf =  float(self.filedict['Nf'])
+        self.Sf =  float(self.filedict['Sf'])
+        self.Ef =  float(self.filedict['Ef'])
+        self.Wf =  float(self.filedict['Wf'])
+
+        self.tile_size = float(self.filedict['tile_size'])
+
+        self.res = float(self.filedict['res'])
+
+        self.seg_width = float(self.filedict['seg_width'])
+
+        self.threads = int(self.filedict['threads'])
+
+        self.mapPullOutPath = str(self.filedict['mapPullOutPath']).strip('"')
+
+        self.mapStreetInPath = str(self.filedict['mapStreetInPath']).strip('"')
+        self.mapStreetOutPath = str(self.filedict['mapStreetOutPath']).strip('"')
+
+        self.mapSegInPath = str(self.filedict['mapSegInPath']).strip('"')
+        self.mapSegOutPath = str(self.filedict['mapSegOutPath']).strip('"')
+
+        self.mapDrawInPath = str(self.filedict['mapDrawInPath']).strip('"')
+        self.mapDrawOutPath = str(self.filedict['mapDrawOutPath']).strip('"')
+
+        self.mapGreyInPath = str(self.filedict['mapGreyInPath']).strip('"')
+        self.mapGreyOutPath = str(self.filedict['mapGreyOutPath']).strip('"')
+        self.mapGrayMaskPath = str(self.filedict['mapGrayMaskPath']).strip('"')
+
+        self.mapConcatInPath = str(self.filedict['mapConcatInPath']).strip('"')
+        self.mapConcatOutPath = str(self.filedict['mapConcatOutPath']).strip('"')
+
+
 
