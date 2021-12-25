@@ -72,7 +72,7 @@ class TileCache():
         # self.stich = None
         self.max_cache_size = 256
         
-        self.loading_tile = pyvips.Image.new_from_file('loadingtile.png')
+        self.loading_tile = pyvips.Image.new_from_file('figs/loadingtile.png')
     
     def add_tile(self,tile,tilecont):
         if tile not in self.tile_queue:
@@ -202,29 +202,31 @@ class SlippyMap():
     def zoomlimit(self):
         if self.zoom > 12:
             self.zoom = 12
+            return True
         if self.zoom < 0:
             self.zoom = 0
+            return True
+        return False
     
     def zoomupdate(self, dir, pos):
-        print(pos)
         
         ref = self.pix2deg(pos)
     
         width,height = self.screen_size
         
         self.zoom += dir
-        
-        sNc,sWc = self.pix2deg((0,0)-pos, ref)
-        sSc,sEc = self.pix2deg((width,height)-pos, ref)
-        candidate_bounds = (sNc,sSc, sEc, sWc)
+        if not self.zoomlimit():
+            sNc,sWc = self.pix2deg((0,0)-pos, ref)
+            sSc,sEc = self.pix2deg((width,height)-pos, ref)
+            candidate_bounds = (sNc,sSc, sEc, sWc)
 
-        if(self.validbounds(candidate_bounds)):
-            self.screen_bounds = candidate_bounds
-        else:
-            self.zoom -= dir
-            print("zoom locked")
+            if(self.validbounds(candidate_bounds)):
+                self.screen_bounds = candidate_bounds
+            else:
+                self.zoom -= dir
+                print("zoom locked")
             
-        self.zoomlimit()
+        
     
     def validbounds(self, bounds):
         N,S,E,W = bounds
@@ -268,7 +270,6 @@ class SlippyMap():
             self.selection_bounds = candidate_bounds
         else:
             print("drag locked")
-        print(self.selection_bounds)
     
     def drag(self,movement):
         

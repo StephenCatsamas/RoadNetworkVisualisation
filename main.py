@@ -82,6 +82,23 @@ class MapSelectionDraggable(wx.Panel):
         wx.Window.CaptureMouse(self)
     def dragend(self, event):
         wx.Window.ReleaseMouse(self)
+    
+    def checkpos(self,newpos):
+        if self.corner == 'NW':
+            posNW = newpos
+            posSE = self.GetParent().dragSE.GetPosition()
+        if self.corner == 'SE':
+            posSE = newpos
+            posNW = self.GetParent().dragNW.GetPosition()    
+        
+        xW,yN = posNW
+        xE,yS = posSE
+        if(xE <= xW):
+            return False
+        if(yS <= yN):
+            return False
+        return True
+        
      
     def drag(self, event):
         if event.Dragging():
@@ -90,10 +107,12 @@ class MapSelectionDraggable(wx.Panel):
             
             newpos = pos+oldpos-self.cursor
             
-            self.SetPosition(newpos)
-            self.GetParent().slippy.setselectionpix(newpos, self.corner)
-            self.GetParent().slippy.rezoom = False
-            self.GetParent().Refresh()
+            if(self.checkpos(newpos)):
+            
+                self.SetPosition(newpos)
+                self.GetParent().slippy.setselectionpix(newpos, self.corner)
+                self.GetParent().slippy.rezoom = False
+                self.GetParent().Refresh()
             
             
     
@@ -111,7 +130,7 @@ class MapPanel(wx.Panel):
         self.Bind( wx.EVT_LEFT_DOWN, self.dragstart)
         self.Bind( wx.EVT_MOTION, self.drag)
 
-        self.buttonbmp = wx.Bitmap('button.png', wx.BITMAP_TYPE_PNG)
+        self.buttonbmp = wx.Bitmap('figs/button.png', wx.BITMAP_TYPE_PNG)
 
         self.dragNW = MapSelectionDraggable(self.buttonbmp, 'NW', self, wx.ID_ANY, size = self.buttonbmp.GetSize())
         self.dragSE = MapSelectionDraggable(self.buttonbmp, 'SE', self, wx.ID_ANY, size = self.buttonbmp.GetSize())
