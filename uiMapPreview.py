@@ -104,25 +104,32 @@ class SlippyMap():
         self.tilesize = 256
     
     #finds lat and lon from screen space pixel
-    def pix2deg(self, pix):
+    def pix2deg(self, pix, ref = None):
         x,y = pix
         
         zl = 2**(-(self.zoom+8))*360
-        slat = self.screen_bounds[0]
-        slon = self.screen_bounds[3]
+        if ref == None:
+            slat = self.screen_bounds[0]
+            slon = self.screen_bounds[3]
+        else:
+            slat,slon = ref
+            
         lon = slon + x*zl
         lat = ifsecint(math.radians(-y*zl),slat)
         
         return (lat,lon)
     
     #find screen space pixel from lat and lon
-    def deg2pix(self, deg):
+    def deg2pix(self, deg, ref = None):
         lat,lon = deg
         
         zl = 2**((self.zoom+8))/360
-        
-        slat = self.screen_bounds[0]
-        slon = self.screen_bounds[3]
+        if ref == None:
+            slat = self.screen_bounds[0]
+            slon = self.screen_bounds[3]
+        else:
+            slat,slon = ref
+            
         y = math.degrees(secint(lat, slat)) * zl
         x = (lon-slon) *zl
         return(x,y)
@@ -202,7 +209,6 @@ class SlippyMap():
         ys = {y for z,x,y in tiles}
         
         grid = (len(xs),len(ys))    
-        print(grid)
         return tiles,grid      
     
     def crop(self):        
@@ -232,19 +238,28 @@ class SlippyMap():
         
         zoom = min(zx,zy)
         zoom = math.floor(zoom-0.2)
+        
+        self.zoom = zoom
         ##############
         ##get screen bounds
         width,height = self.screen_size
+
+        Wp,Np = self.deg2pix((N,W),(N,W))
+        Ep,Sp = self.deg2pix((S,E),(N,W))
         
-        zl = 2**(-(zoom+8))*360
+        sNp = (Np + Sp - height)/2
+        sSp = (Np + Sp + height)/2
+        sEp = (Ep + Wp + width)/2
+        sWp = (Ep + Wp - width)/2
+
         
-        sN = N
-        sS = ifsecint(math.radians(-height*zl), sN)
-        sE = (E + W + width*zl)/2
-        sW = (E + W - width*zl)/2
+        sN,sW = self.pix2deg((sWp, sNp),(N,W))
+        sS,sE = self.pix2deg((sEp, sSp),(N,W))
+        
+
         #############
         self.screen_bounds = (sN,sS,sE,sW)
-        self.zoom = zoom
+
 
     def fetch_tile(self, tile):
         # if tile[2] == 'OOB':
