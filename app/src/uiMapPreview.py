@@ -3,6 +3,7 @@ import requests
 import pyvips
 import itertools
 import threading
+import os
 from queue import Queue,LifoQueue
 import time
 
@@ -72,7 +73,9 @@ class TileCache():
         # self.stich = None
         self.max_cache_size = 256
         
-        self.loading_tile = pyvips.Image.new_from_file('figs/loadingtile.png')
+        dirname = os.path.dirname(__file__)
+        fp = os.path.join(dirname, '../ico/loadingtile.png')
+        self.loading_tile = pyvips.Image.new_from_file(fp)
     
     def add_tile(self,tile,tilecont):
         if tile not in self.tile_queue:

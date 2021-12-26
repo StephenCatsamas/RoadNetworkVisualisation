@@ -4,12 +4,12 @@ import wx.stc
 import csv
 import os
 import subprocess
-import map
-import uiMapPreview
+from . import map
+from . import uiMapPreview
 import threading
 import math
 import pyvips
-from args import ArgsContainer
+from .args import ArgsContainer
 
 
 class SpinCtrlDoubleAdpt(wx.SpinCtrlDouble):
@@ -137,7 +137,9 @@ class MapPanel(wx.Panel):
         self.Bind( wx.EVT_LEFT_DOWN, self.dragstart)
         self.Bind( wx.EVT_MOTION, self.drag)
 
-        self.buttonbmp = wx.Bitmap('figs/button.png', wx.BITMAP_TYPE_PNG)
+        dirname = os.path.dirname(__file__)
+        fp = os.path.join(dirname, '../ico/button.png')
+        self.buttonbmp = wx.Bitmap(fp, wx.BITMAP_TYPE_PNG)
 
         self.dragNW = MapSelectionDraggable(self.buttonbmp, 'NW', self, wx.ID_ANY, size = self.buttonbmp.GetSize())
         self.dragSE = MapSelectionDraggable(self.buttonbmp, 'SE', self, wx.ID_ANY, size = self.buttonbmp.GetSize())
@@ -201,7 +203,7 @@ class MainForm ( wx.Frame ):
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 800,450 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
         
         dirname = os.path.dirname(__file__)
-        fp = os.path.join(dirname, "figs/icon.ico")
+        fp = os.path.join(dirname, "../ico/icon.ico")
         self.SetIcon(wx.Icon(fp))
         self.SetSizeHints( wx.Size( 800,450 ), wx.DefaultSize )
         self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
@@ -431,14 +433,6 @@ class MainForm ( wx.Frame ):
         self.args.do_cull = self.do_cull_widg.GetValue()
         self.args.force_seg = self.force_set_widg.GetValue()
         
-        self.stp = int(round(self.tile_size,3)*self.blk)
-
-        self.N = int(math.floor(self.blk*round(self.Nf,3)))
-        self.S = int(math.floor(self.blk*round(self.Sf,3)))
-        self.E = int(math.floor(self.blk*round(self.Ef,3)))
-        self.W = int(math.floor(self.blk*round(self.Wf,3)))
-        
-        
         self.map_view.slippy.rezoom = True
         self.updatewidgets()
         
@@ -449,10 +443,13 @@ class MainForm ( wx.Frame ):
     def restore_options(self):
         print('implement restoring options')
 
-if __name__ == "__main__":
+def begin():
     app = wx.App()
     frame =  MainForm(None)
     frame.Show()
     app.MainLoop()
+
+if __name__ == "__main__":
+    begin()
 
 
