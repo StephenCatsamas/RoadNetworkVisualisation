@@ -1,15 +1,11 @@
-import args as ag
+
 import os
 import math
 import requests
 import time
 
-args = ag.ArgsContainer()
-def update_args():
-    global args
-    args.update_args()
 
-def pull():
+def pull(args):
     
     if (args.S > args.N) or (args.W > args.E):
         print('###############')

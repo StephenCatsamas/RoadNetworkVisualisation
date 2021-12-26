@@ -4,10 +4,10 @@ import csv
 
 class ArgsContainer():
 
-    def __init__(self,file = 'args_def.txt'):
+    def __init__(self,file = 'lstarg.cfg'):
         self.load_args(file = file) 
-        
-    def load_args(self,file = 'args_lst.txt'):
+    
+    def load_args(self,file = 'lstarg.cfg'):
         dirname = os.path.dirname(__file__)
         fp = os.path.join(dirname, file)
         with open(fp, 'r', newline='') as csvfile:
@@ -20,10 +20,9 @@ class ArgsContainer():
                 if row[0][0] == '#':
                     continue
                 self.filedict[row[0].strip()] = row[1].strip()
-                
-        self.dict2name()
+        self.dict2name()       
         
-        #################################################################################
+        ##############################################################################
         self.blk = 1000
 
         self.folders = list()
@@ -49,6 +48,19 @@ class ArgsContainer():
         self.S = int(math.floor(self.blk*round(self.Sf,3)))
         self.E = int(math.floor(self.blk*round(self.Ef,3)))
         self.W = int(math.floor(self.blk*round(self.Wf,3)))
+        
+    
+    def save_args(self,file = 'lstarg.cfg'):
+    
+        self.name2dict()
+    
+        dirname = os.path.dirname(__file__)
+        fp = os.path.join(dirname, file)
+        with open(fp, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter='=',
+                                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            for key in self.filedict.keys():
+                writer.writerow([key,self.filedict[key]])
         
     def dict2name(self):
         self.colour_mode = str(self.filedict['colour_mode']).strip('"')
@@ -88,5 +100,38 @@ class ArgsContainer():
         self.mapConcatInPath = str(self.filedict['mapConcatInPath']).strip('"')
         self.mapConcatOutPath = str(self.filedict['mapConcatOutPath']).strip('"')
 
+    def name2dict(self):
+        self.filedict['colour_mode'] = '"' + self.colour_mode + '"'
+        self.filedict['flush_map_cache'] = str(self.flush_map_cache)
+        self.filedict['do_cull'] = str(self.do_cull)
+        self.filedict['force_seg'] = str(self.force_seg)
 
+        self.filedict['Nf'] = str(self.Nf)
+        self.filedict['Sf'] = str(self.Sf)
+        self.filedict['Ef'] = str(self.Ef)
+        self.filedict['Wf'] = str(self.Wf)
+        
+        
+        self.filedict['tile_size'] = str(self.tile_size)
+        self.filedict['res'] = str(self.res)
+        self.filedict['seg_width'] = str(self.seg_width)
+        self.filedict['threads'] = str(self.threads)
+
+        self.filedict['mapPullOutPath'] = '"' + self.mapPullOutPath + '"'
+        
+        self.filedict['mapStreetInPath'] = '"' + self.mapStreetInPath + '"'
+        self.filedict['mapStreetOutPath'] = '"' + self.mapStreetOutPath + '"'
+        
+        self.filedict['mapSegInPath'] = '"' + self.mapSegInPath + '"'
+        self.filedict['mapSegOutPath'] = '"' + self.mapSegOutPath + '"'
+
+        self.filedict['mapDrawInPath'] = '"' + self.mapDrawInPath + '"'
+        self.filedict['mapDrawOutPath'] = '"' + self.mapDrawOutPath + '"'
+        
+        self.filedict['mapGreyInPath'] = '"' + self.mapGreyInPath + '"'
+        self.filedict['mapGreyOutPath'] = '"' + self.mapGreyOutPath + '"'
+        self.filedict['mapGrayMaskPath'] = '"' + self.mapGrayMaskPath + '"'
+        
+        self.filedict['mapConcatInPath'] = '"' + self.mapConcatInPath + '"'
+        self.filedict['mapConcatOutPath'] = '"' + self.mapConcatOutPath + '"'
 

@@ -1,4 +1,3 @@
-import args as ag
 import os
 import math
 import matplotlib.pyplot as plt
@@ -7,12 +6,7 @@ import csv
 import numpy as np
 import time
 
-args = ag.ArgsContainer()
-def update_args():
-    global args
-    args.update_args()
-
-def draw(file):
+def draw(file, args):
         
         fcur = args.mapDrawInPath+'\\'+file
         fout = args.mapDrawOutPath+'\\'+file[:-4] + '.png'

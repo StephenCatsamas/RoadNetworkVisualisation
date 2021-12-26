@@ -1,14 +1,9 @@
-import args as ag
 import os
 import math
 import colorsys
 import lxml.etree as ET
 import csv
 
-args = ag.ArgsContainer()
-def update_args():
-    global args
-    args.update_args()
 
 def idSort(enum):
     return(int(enum[1]))
@@ -103,7 +98,7 @@ def seg_plot(args,lonlst,latlst,width, writer):
 
 
 
-def seg_thread(file):
+def seg_thread(file, args):
 
     fcur = args.mapSegInPath+'\\'+file
     fout = args.mapSegOutPath+'\\' +file[:-4] + '.csv'

@@ -1,23 +1,18 @@
-import args as ag
 import os
 import pyvips
 
-args = ag.ArgsContainer()
-def update_args():
-    global args
-    args.update_args()
-    
-def order_key(file):
+
+def row_major(file):
     Cia = file.find("_")
     Cib = file.find("_", Cia+1)
     Cic = file.find(".", Cib)
     
-    flat = int(file[Cia+1:Cib])/args.blk
-    flon = int(file[Cib+1:Cic])/args.blk
+    flat = float(file[Cia+1:Cib])
+    flon = float(file[Cib+1:Cic])
 
-    return -(flat+90)*1000000+(flon+180)
+    return -flat,flon
 
-def grey(file):
+def grey(file, args):
     fcur = args.mapGreyInPath+'\\'+file
     fout = args.mapGreyOutPath+'\\'+file
     fgry = args.mapGrayMaskPath + '\\' + 'Grey.png'
@@ -30,7 +25,7 @@ def grey(file):
     im_grey = im_background.composite2(im_forground, 'over')
     im_grey.write_to_file(fout)
 
-def concat():
+def concat(args):
     rowlist = list()
 
     ny = len(range(args.S,args.N,args.stp))
@@ -40,7 +35,7 @@ def concat():
     
     for root,dirs,files in os.walk(args.mapConcatInPath):
        
-       files.sort(key = order_key)
+       files.sort(key = row_major)
        
     images = [pyvips.Image.new_from_file(args.mapConcatInPath+'\\'+file) for file in files]
     

@@ -362,8 +362,8 @@ class MainForm ( wx.Frame ):
         # Connect Events
         self.north.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
         self.south.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
-        self.west.Bind( wx.EVT_SPINCTRLDOUBLE,  self.controlupdate)
         self.east.Bind( wx.EVT_SPINCTRLDOUBLE,  self.controlupdate)
+        self.west.Bind( wx.EVT_SPINCTRLDOUBLE,  self.controlupdate)
         self.tile_res.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
         self.image_res.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
         self.draw_width.Bind( wx.EVT_SPINCTRLDOUBLE, self.controlupdate)
@@ -383,8 +383,8 @@ class MainForm ( wx.Frame ):
         pass
     
     def make_map(self):
-        self.save_options()
-        work_thread = threading.Thread(target=map.run, args=[])
+        self.args.save_args()
+        work_thread = threading.Thread(target=map.run, args=[self.args])
         work_thread.start()    
 
     def updatewidgets(self):
@@ -392,6 +392,7 @@ class MainForm ( wx.Frame ):
         self.south.SetValue(self.args.Sf)
         self.east.SetValue(self.args.Ef)
         self.west.SetValue(self.args.Wf)
+        self.tile_res.SetValue(self.args.tile_size)
         self.image_res.SetValue(self.args.res)
         self.draw_width.SetValue(self.args.seg_width)
         self.flush_cache_widg.SetValue(self.args.flush_map_cache)
@@ -423,6 +424,7 @@ class MainForm ( wx.Frame ):
         self.args.Sf = self.south.GetValue()
         self.args.Ef = self.east.GetValue()
         self.args.Wf = self.west.GetValue()
+        self.args.tile_size = self.tile_res.GetValue()
         self.args.res = self.image_res.GetValue()
         self.args.seg_width = self.draw_width.GetValue()
         self.args.flush_map_cache = self.flush_cache_widg.GetValue()
