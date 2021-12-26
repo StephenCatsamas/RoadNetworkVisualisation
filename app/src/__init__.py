@@ -7,3 +7,4 @@ from . import mapSeg
 from . import mapStreet
 from . import ui
 from . import uiMapPreview
+from . import maptoolslib
