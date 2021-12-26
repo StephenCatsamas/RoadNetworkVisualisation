@@ -1,16 +1,19 @@
 default: all
 
-all:
-    cd maptoolslib
+rust:
+    @cd maptoolslib
     cargo build
-    cd ..
-    
-    
+    @cd ..
+
+all: rust    
     copy maptoolslib\target\debug\maptoolslib.dll app\src\maptoolslib.pyd
     
 run: all
     app\main.py
-    
+
+runr: rust
+    @maptoolslib\target\debug\maptools.exe
+
 clean:
     cd maptoolslib
     cargo clean
