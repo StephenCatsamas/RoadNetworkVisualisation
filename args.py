@@ -42,12 +42,7 @@ class ArgsContainer():
         if not self.do_cull:
             self.mapSegInPath = self.mapStreetInPath
 
-        self.stp = int(round(self.tile_size,3)*self.blk)
-
-        self.N = int(math.floor(self.blk*round(self.Nf,3)))
-        self.S = int(math.floor(self.blk*round(self.Sf,3)))
-        self.E = int(math.floor(self.blk*round(self.Ef,3)))
-        self.W = int(math.floor(self.blk*round(self.Wf,3)))
+        
         
     
     def save_args(self,file = 'lstarg.cfg'):

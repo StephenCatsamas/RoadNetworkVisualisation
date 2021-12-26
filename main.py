@@ -431,6 +431,14 @@ class MainForm ( wx.Frame ):
         self.args.do_cull = self.do_cull_widg.GetValue()
         self.args.force_seg = self.force_set_widg.GetValue()
         
+        self.stp = int(round(self.tile_size,3)*self.blk)
+
+        self.N = int(math.floor(self.blk*round(self.Nf,3)))
+        self.S = int(math.floor(self.blk*round(self.Sf,3)))
+        self.E = int(math.floor(self.blk*round(self.Ef,3)))
+        self.W = int(math.floor(self.blk*round(self.Wf,3)))
+        
+        
         self.map_view.slippy.rezoom = True
         self.updatewidgets()
         
