@@ -13,6 +13,7 @@ run: all
 
 runr: rust
     @maptoolslib\target\debug\maptools.exe
+    @outfile.png
 
 clean:
     cd maptoolslib
