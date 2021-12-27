@@ -13,7 +13,7 @@ struct Vertex {
 async fn run(fp : &str, bgcolour : wgpu::Color) {
 
     let v1 = Vertex { position: [0.0, 0.5], colour: [1.0, 0.0, 0.0] };
-    let v2 = Vertex { position: [-0.2, -0.8], colour: [0.0, 1.0, 0.0] };
+    let v2 = Vertex { position: [-0.2, -0.8], colour: [0.0, 1.0, 1.0] };
 
     let vertex_data = line2tris(v1,v2, 0.05);
     let verticies = &vertex_data;
