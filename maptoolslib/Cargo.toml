@@ -15,8 +15,18 @@ crate-type = ["dylib"]
 version = "0.7.0"
 features = ["extension-module"]
 
-[dependencies.glium]
-version = "0.31.0"
+[dependencies.wgpu]
+version  = "0.11"
+features = ["spirv"]
+
+[dependencies]
+cmake = "0.1.46"
+image = "0.23"
+raw-window-handle = "0.3"
+winit = "0.25"
+shaderc = "0.7"
+cgmath = "0.18"
+pollster = "0.2"
 
 [build-dependencies]
 chrono = "0.4.19"

@@ -1,181 +1,198 @@
-#[macro_use]
-extern crate glium;
+use std::num::NonZeroU32;
 
-use glium::{glutin, Surface};
+async fn run(fp : &str) {
+    let instance = wgpu::Instance::new(wgpu::Backends::all());
+    let adapter = instance
+        .request_adapter(&wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::default(),
+            compatible_surface: None,
+            force_fallback_adapter: false,
+        })
+        .await
+        .unwrap();
+    let (device, queue) = adapter
+        .request_device(&Default::default(), None)
+        .await
+        .unwrap();
 
-fn main() {
-    println!(concat!("rust bin built at: ", include!(concat!(env!("OUT_DIR"), "/timestamp.txt"))));
+    let texture_size = 256u32;//size of square texture
     
-    glfunc();
-    
-}
-
-#[derive(Copy, Clone, Debug)]
-struct Vertex {
-    position: [f32; 2],
-}
-
-fn glfunc(){
-    println!("glfunc");
-    
-    
-    
-    let event_loop = glutin::event_loop::EventLoop::new();
-    let size = glutin::dpi::LogicalSize {height: 400,width: 400};
-    let wb = glutin::window::WindowBuilder::new().with_inner_size(size);
-    let cb = glutin::ContextBuilder::new();
-    let display = glium::Display::new(wb, cb, &event_loop).unwrap();
-
-    implement_vertex!(Vertex, position);
-    
-    //triangle
-    let from = Vertex { position: [0.5, 0.0] };
-    let to = Vertex { position: [ 0.0,  0.5] };
-    
-    let  tris = line2tris(from,to ,0.1);
-    println!("{:?}", tris);
-    
-    //send to vertex buffer
-    let vertex_buffer = glium::VertexBuffer::new(&display, &tris).unwrap();
-    
-    //indicies
-    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-    
-    let vertex_shader_src = r#"
-                                #version 140
-
-                                in vec2 position;
-
-                                void main() {
-                                    gl_Position = vec4(position, 0.0, 1.0);
-                                }
-                            "#;
-    
-    let fragment_shader_src = r#"
-                                #version 140
-
-                                out vec4 color;
-
-                                void main() {
-                                    color = vec4(1.0, 0.0, 0.0, 1.0);
-                                }
-                            "#;
-    
-    let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
-    
-    
-    let mut target = display.draw();
-    target.clear_color(0.0, 0.0, 1.0, 1.0);
-        
-    target.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
-            &Default::default()).unwrap();
-    
-    target.finish().unwrap();
-    
-    // window_loop(event_loop);
-    // println!("{}", event_loop)
-    window_loop(event_loop);
-    
-}
-
-
-fn window_loop(event_loop: glutin::event_loop::EventLoop<()>){
-
-    event_loop.run(move |ev, _, control_flow| {
-    let next_frame_time = std::time::Instant::now() +
-        std::time::Duration::from_nanos(16_666_667);
-    *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
-    match ev {
-        glutin::event::Event::WindowEvent { event, .. } => match event {
-            glutin::event::WindowEvent::CloseRequested => {
-                *control_flow = glutin::event_loop::ControlFlow::Exit;
-                return;
-            },
-            _ => return,
+    let texture_desc = wgpu::TextureDescriptor {
+        size: wgpu::Extent3d {
+            width: texture_size,
+            height: texture_size,
+            depth_or_array_layers: 1,
         },
-        _ => (),
-    }
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        label: None,
+    };
+    let texture = device.create_texture(&texture_desc);
+    let texture_view = texture.create_view(&Default::default());
+
+    // we need to store this for later
+    let u32_size = std::mem::size_of::<u32>() as u32;
+
+    let output_buffer_size = (u32_size * texture_size * texture_size) as wgpu::BufferAddress;
+    let output_buffer_desc = wgpu::BufferDescriptor {
+        size: output_buffer_size,
+        usage: wgpu::BufferUsages::COPY_DST
+            // this tells wpgu that we want to read this buffer from the cpu
+            | wgpu::BufferUsages::MAP_READ,
+        label: None,
+        mapped_at_creation: false,
+    };
+    let output_buffer = device.create_buffer(&output_buffer_desc);
+
+    let vs_src = include_str!("shader.vert");
+    let fs_src = include_str!("shader.frag");
+    let mut compiler = shaderc::Compiler::new().unwrap();
+    let vs_spirv = compiler
+        .compile_into_spirv(
+            vs_src,
+            shaderc::ShaderKind::Vertex,
+            "shader.vert",
+            "main",
+            None,
+        )
+        .unwrap();
+    let fs_spirv = compiler
+        .compile_into_spirv(
+            fs_src,
+            shaderc::ShaderKind::Fragment,
+            "shader.frag",
+            "main",
+            None,
+        )
+        .unwrap();
+    let vs_data = wgpu::util::make_spirv(vs_spirv.as_binary_u8());
+    let fs_data = wgpu::util::make_spirv(fs_spirv.as_binary_u8());
+    let vs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+        label: Some("Vertex Shader"),
+        source: vs_data,
+    });
+    let fs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+        label: Some("Fragment Shader"),
+        source: fs_data,
     });
 
-}
+    let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("Render Pipeline Layout"),
+        bind_group_layouts: &[],
+        push_constant_ranges: &[],
+    });
 
-fn invgrad(from : Vertex,to : Vertex) -> f32{
-    let x1 : f32 = from.position[0];
-    let y1 : f32 = from.position[1];
-    
-    let x2 : f32 = to.position[0];
-    let y2 : f32 = to.position[1];
-    
-    if y1 == y2 {
-        return f32::MAX;
-    }else{
-        return -(x1-x2)/(y1-y2);
+    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some("Render Pipeline"),
+        layout: Some(&render_pipeline_layout),
+        vertex: wgpu::VertexState {
+            module: &vs_module,
+            entry_point: "main",
+            buffers: &[],
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: &fs_module,
+            entry_point: "main",
+            targets: &[wgpu::ColorTargetState {
+                format: texture_desc.format,
+                blend: Some(wgpu::BlendState {
+                    alpha: wgpu::BlendComponent::REPLACE,
+                    color: wgpu::BlendComponent::REPLACE,
+                }),
+                write_mask: wgpu::ColorWrites::ALL,
+            }],
+        }),
+        primitive: wgpu::PrimitiveState {
+            topology: wgpu::PrimitiveTopology::TriangleList,
+            strip_index_format: None,
+            front_face: wgpu::FrontFace::Ccw,
+            cull_mode: Some(wgpu::Face::Back),
+            // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+            polygon_mode: wgpu::PolygonMode::Fill,
+            // Requires Features::DEPTH_CLAMPING
+            clamp_depth: false,
+            // Requires Features::CONSERVATIVE_RASTERIZATION
+            conservative: false,
+        },
+        depth_stencil: None,
+        multisample: wgpu::MultisampleState {
+            count: 1,
+            mask: !0,
+            alpha_to_coverage_enabled: false,
+        },
+    });
+
+    let mut encoder =
+        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+
+    {
+        let render_pass_desc = wgpu::RenderPassDescriptor {
+            label: Some("Render Pass"),
+            color_attachments: &[wgpu::RenderPassColorAttachment {
+                view: &texture_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                        r: 0.2,
+                        g: 0.2,
+                        b: 0.2,
+                        a: 1.0,
+                    }),
+                    store: true,
+                },
+            }],
+            depth_stencil_attachment: None,
+        };
+        let mut render_pass = encoder.begin_render_pass(&render_pass_desc);
+
+        render_pass.set_pipeline(&render_pipeline);
+        render_pass.draw(0..3, 0..1);
     }
-}
 
-fn sub(from : Vertex,to : Vertex) -> Vertex{
-    let x1 : f32 = from.position[0];
-    let y1 : f32 = from.position[1];
-    
-    let x2 : f32 = to.position[0];
-    let y2 : f32 = to.position[1];
-    
-   return Vertex {position: [x1 - x2, y1-y2]};
-}
+    encoder.copy_texture_to_buffer(
+        wgpu::ImageCopyTexture {
+            aspect: wgpu::TextureAspect::All,
+            texture: &texture,
+            mip_level: 0,
+            origin: wgpu::Origin3d::ZERO,
+        },
+        wgpu::ImageCopyBuffer {
+            buffer: &output_buffer,
+            layout: wgpu::ImageDataLayout {
+                offset: 0,
+                bytes_per_row: NonZeroU32::new(u32_size * texture_size),
+                rows_per_image: NonZeroU32::new(texture_size),
+            },
+        },
+        texture_desc.size,
+    );
 
-fn add(from : Vertex,to : Vertex) -> Vertex{
-    let x1 : f32 = from.position[0];
-    let y1 : f32 = from.position[1];
-    
-    let x2 : f32 = to.position[0];
-    let y2 : f32 = to.position[1];
-    
-   return Vertex {position: [x1 + x2, y1+y2]};
-}
+    queue.submit(Some(encoder.finish()));
 
-fn mul(v : Vertex, s : f32) -> Vertex{
-    let x : f32 = v.position[0];
-    let y : f32 = v.position[1];
-    
-    return Vertex {position: [x*s, y*s]};
-}
+    // We need to scope the mapping variables so that we can
+    // unmap the buffer
+    {
+        let buffer_slice = output_buffer.slice(..);
 
-fn norm(v : Vertex) -> Vertex{
-    let x : f32 = v.position[0];
-    let y : f32 = v.position[1];
+        // NOTE: We have to create the mapping THEN device.poll() before await
+        // the future. Otherwise the application will freeze.
+        let mapping = buffer_slice.map_async(wgpu::MapMode::Read);
+        device.poll(wgpu::Maintain::Wait);
+        mapping.await.unwrap();
 
-    let n : f32 = (x*x + y*y).sqrt();
-    
-    return Vertex {position: [x/n, y/n]};
-    
+        let data = buffer_slice.get_mapped_range();
 
-}
-
-fn normal(from : Vertex,to : Vertex) -> Vertex{
-    
-    let g : f32 = invgrad(from,to);
-    
-    let normal;
-    if g != f32::MAX{
-        normal = Vertex {position : [1.0, g]};
-    }else{
-        normal = Vertex {position : [0.0,1.0]};
+        use image::{ImageBuffer, Rgba};
+        let buffer =
+            ImageBuffer::<Rgba<u8>, _>::from_raw(texture_size, texture_size, data).unwrap();
+        buffer.save(fp).unwrap();
     }
-        
-    return norm(normal);
-    
+    output_buffer.unmap();
 }
 
-fn line2tris(from : Vertex,to : Vertex, width : f32) -> [Vertex; 6]{
-    
-    let normal: Vertex = normal(from, to);
-    let ofset : Vertex = mul(normal,width/2.0);
-    
-    let v1 : Vertex = add(from, ofset);
-    let v2 : Vertex = sub(from, ofset);
-    
-    let v3 : Vertex = add(to, ofset);
-    let v4 : Vertex = sub(to, ofset);
-
-    return [v1,v3,v2,v3,v4,v2];
+fn main() {
+    pollster::block_on(run("outfile.png"));
 }
