@@ -5,19 +5,19 @@ use wgpu::util::DeviceExt;
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct Vertex {
-    position: [f32; 3],
+    position: [f32; 2],
     colour: [f32; 3],
 }
 
 //main.rs
 const VERTICES: &[Vertex] = &[
-    Vertex { position: [0.0, 0.5, 0.0], colour: [1.0, 0.0, 0.0] },
-    Vertex { position: [-0.5, -0.5, 0.0], colour: [0.0, 1.0, 0.0] },
-    Vertex { position: [0.5, -0.5, 0.0], colour: [0.0, 0.0, 1.0] },
+    Vertex { position: [0.0, 0.5], colour: [1.0, 0.0, 0.0] },
+    Vertex { position: [-0.5, -0.5], colour: [0.0, 1.0, 0.0] },
+    Vertex { position: [0.5, -0.5], colour: [0.0, 0.0, 1.0] },
     
-    Vertex { position: [0.2, 0.7, 0.0], colour: [1.0, 0.0, 0.0] },
-    Vertex { position: [-0.3, -0.3, 0.0], colour: [0.0, 1.0, 0.0] },
-    Vertex { position: [0.7, -0.3, 0.0], colour: [0.0, 0.0, 1.0] },
+    Vertex { position: [0.7, -0.3], colour: [0.0, 0.0, 1.0] },
+    Vertex { position: [-0.3, -0.3], colour: [0.0, 1.0, 0.0] },
+    Vertex { position: [0.2, 0.7], colour: [1.0, 0.0, 0.0] },
 ];
  
 
@@ -52,10 +52,10 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
             wgpu::VertexAttribute {
                 offset: 0, // 4.
                 shader_location: 0, // 5.
-                format: wgpu::VertexFormat::Float32x3, // 6.
+                format: wgpu::VertexFormat::Float32x2, // 6.
             },
             wgpu::VertexAttribute {
-                offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                offset: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
                 shader_location: 1,
                 format: wgpu::VertexFormat::Float32x3,
             }
@@ -132,7 +132,7 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
             topology: wgpu::PrimitiveTopology::TriangleList,
             strip_index_format: None,
             front_face: wgpu::FrontFace::Ccw,
-            cull_mode: Some(wgpu::Face::Back),
+            cull_mode: None,
             // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
             polygon_mode: wgpu::PolygonMode::Fill,
             // Requires Features::DEPTH_CLAMPING
