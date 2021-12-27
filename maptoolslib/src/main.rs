@@ -9,19 +9,15 @@ struct Vertex {
     colour: [f32; 3],
 }
 
-//main.rs
-const VERTICES: &[Vertex] = &[
-    Vertex { position: [0.0, 0.5], colour: [1.0, 0.0, 0.0] },
-    Vertex { position: [-0.5, -0.5], colour: [0.0, 1.0, 0.0] },
-    Vertex { position: [0.5, -0.5], colour: [0.0, 0.0, 1.0] },
-    
-    Vertex { position: [0.7, -0.3], colour: [0.0, 0.0, 1.0] },
-    Vertex { position: [-0.3, -0.3], colour: [0.0, 1.0, 0.0] },
-    Vertex { position: [0.2, 0.7], colour: [1.0, 0.0, 0.0] },
-];
- 
 
 async fn run(fp : &str, bgcolour : wgpu::Color) {
+
+    let v1 = Vertex { position: [0.0, 0.5], colour: [1.0, 0.0, 0.0] };
+    let v2 = Vertex { position: [-0.2, -0.8], colour: [0.0, 1.0, 0.0] };
+
+    let vertex_data = line2tris(v1,v2, 0.05);
+    let verticies = &vertex_data;
+
     let instance = wgpu::Instance::new(wgpu::Backends::all());
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
@@ -39,7 +35,7 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
     let vertex_buffer = device.create_buffer_init(
         &wgpu::util::BufferInitDescriptor {
             label : Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
+            contents: bytemuck::cast_slice(verticies),
             usage: wgpu::BufferUsages::VERTEX,
         }
     );
@@ -169,7 +165,7 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
         render_pass.set_pipeline(&render_pipeline);
         
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-        render_pass.draw(0..(VERTICES.len() as u32), 0..1);
+        render_pass.draw(0..(verticies.len() as u32), 0..1);
     }
 
     encoder.copy_texture_to_buffer(
@@ -222,4 +218,97 @@ fn main() {
     let bgcolour = wgpu::Color {r: 0.1, g: 0.1, b: 0.1, a: 1.0,};
 
     pollster::block_on(run(fp , bgcolour));
+}
+
+
+
+fn invgrad(from : Vertex,to : Vertex) -> f32{
+    let x1 : f32 = from.position[0];
+    let y1 : f32 = from.position[1];
+    
+    let x2 : f32 = to.position[0];
+    let y2 : f32 = to.position[1];
+    
+    if y1 == y2 {
+        return f32::MAX;
+    }else{
+        return -(x1-x2)/(y1-y2);
+    }
+}
+
+fn sub(from : Vertex,to : Vertex) -> Vertex{
+    let x1 : f32 = from.position[0];
+    let y1 : f32 = from.position[1];    
+    
+    let x2 : f32 = to.position[0];
+    let y2 : f32 = to.position[1];
+    
+    let col = from.colour;
+    
+   return Vertex {position: [x1 - x2, y1-y2], colour: col};
+}
+
+fn add(from : Vertex,to : Vertex) -> Vertex{
+    let x1 : f32 = from.position[0];
+    let y1 : f32 = from.position[1];
+    
+    let x2 : f32 = to.position[0];
+    let y2 : f32 = to.position[1];
+    
+    let col = from.colour;
+    
+   return Vertex {position: [x1 + x2, y1+y2], colour: col};
+}
+
+fn mul(v : Vertex, s : f32) -> Vertex{
+    let x : f32 = v.position[0];
+    let y : f32 = v.position[1];
+    
+    let col = v.colour;
+    
+    return Vertex {position: [x*s, y*s], colour: col};
+}
+
+fn norm(v : Vertex) -> Vertex{
+    let x : f32 = v.position[0];
+    let y : f32 = v.position[1];
+
+    let n : f32 = (x*x + y*y).sqrt();
+    
+    let col = v.colour;
+    
+    return Vertex {position: [x/n, y/n], colour: col};
+    
+
+}
+
+fn normal(from : Vertex,to : Vertex) -> Vertex{
+    
+    let g : f32 = invgrad(from,to);
+    
+    let col = from.colour;
+    
+    let normal;
+    if g != f32::MAX{
+        normal = Vertex {position : [1.0, g], colour: col};
+    }else{
+        normal = Vertex {position : [0.0,1.0], colour: col};
+    }
+        
+    return norm(normal);
+    
+}
+
+fn line2tris(from : Vertex,to : Vertex, width : f32) -> [Vertex; 6]{
+    
+    let normal: Vertex = normal(from, to);
+    let ofset : Vertex = mul(normal,width/2.0);
+    
+    let v1 : Vertex = add(from, ofset);
+    let v2 : Vertex = sub(from, ofset);
+    
+    let v3 : Vertex = add(to, ofset);
+    let v4 : Vertex = sub(to, ofset);
+
+    return [v1,v3,v2,v3,v4,v2];
 }
