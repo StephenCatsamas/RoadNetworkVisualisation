@@ -41,33 +41,8 @@ fn make_vertex_buffer_layout() -> wgpu::VertexBufferLayout<'static>{
     return vbl;
 }
 
-
-
-fn draw(graphics : &Graphics) -> (wgpu::Buffer, u32){
-    let v1 = Vertex { position: [0.0, 0.5], colour: [1.0, 1.0, 1.0] };
-    let v2 = Vertex { position: [-0.2, -0.8], colour: [1.0, 0.0, 0.0] };
-    
-    let l1 = line2tris(v1,v2, 0.05);
-    
-    let v1 = Vertex { position: [0.4, 0.8], colour: [1.0, 0.5, 0.0] };
-    let v2 = Vertex { position: [-0.2, 0.8], colour: [0.0, 1.0, 1.0] };
-    
-    let l2 = line2tris(v1,v2, 0.02);
-    
-    let v1 = Vertex { position: [0.0, 0.6], colour: [1.0, 0.5, 1.0] };
-    let v2 = Vertex { position: [-0.5, 0.8], colour: [0.0, 0.2, 0.3] };
-    
-    let l3 = line2tris(v1,v2, 0.1);
-
-
-    let mut vertex_data = Vec::<Vertex>::new();
-    
-    vertex_data.extend(l1);
-    vertex_data.extend(l2);
-    vertex_data.extend(l3);
-    
-    
-    let verticies = &vertex_data;
+fn draw(vert_dat: Vec::<Vertex>, graphics : &Graphics) -> (wgpu::Buffer, u32){
+    let verticies = &vert_dat;
 
     let vertex_buffer = graphics.device.create_buffer_init(
         &wgpu::util::BufferInitDescriptor {
@@ -171,7 +146,8 @@ fn make_texture_descriptor(graphics : &Graphics) -> wgpu::TextureDescriptor<'sta
     return tex_desc;
 }
 
-async fn setup(bgcolour : wgpu::Color) -> Graphics<'static>{
+async fn setup(vert_dat : Vec::<Vertex>, bgcolour : wgpu::Color) -> Graphics<'static>{
+    
     let instance = wgpu::Instance::new(wgpu::Backends::all());
     
     let adapter = instance
@@ -234,7 +210,7 @@ async fn setup(bgcolour : wgpu::Color) -> Graphics<'static>{
 
         render_pass.set_pipeline(&render_pipeline);
         
-        let (t_vertex_buffer,t_size) = draw(&graphics);
+        let (t_vertex_buffer,t_size) = draw(vert_dat, &graphics);
         vertex_buffer = t_vertex_buffer;
         size = t_size;
         
@@ -300,15 +276,46 @@ fn save_buffer(graphics : &Graphics, buffer_slice : &wgpu::BufferSlice, fp : &st
 
 }
 
+fn make_draw_data() -> Vec::<Vertex>{
+    let v1 = Vertex { position: [0.0, 0.5], colour: [1.0, 1.0, 1.0] };
+    let v2 = Vertex { position: [-0.2, -0.8], colour: [1.0, 0.0, 0.0] };
+    
+    let l1 = line2tris(v1,v2, 0.05);
+    
+    let v1 = Vertex { position: [0.4, 0.8], colour: [1.0, 0.5, 0.0] };
+    let v2 = Vertex { position: [-0.2, 0.8], colour: [0.0, 1.0, 1.0] };
+    
+    let l2 = line2tris(v1,v2, 0.02);
+    
+    let v1 = Vertex { position: [0.0, 0.6], colour: [1.0, 0.5, 1.0] };
+    let v2 = Vertex { position: [-0.5, 0.8], colour: [0.0, 0.2, 0.3] };
+    
+    let l3 = line2tris(v1,v2, 0.1);
+
+
+    let mut vertex_data = Vec::<Vertex>::new();
+    
+    vertex_data.extend(l1);
+    vertex_data.extend(l2);
+    vertex_data.extend(l3);
+    
+    
+    return vertex_data;
+}
 
 
 fn main() {
     let fp = "outfile.png";
     let bgcolour = wgpu::Color {r: 0.1, g: 0.1, b: 0.1, a: 1.0,};
 
-    let graphics = pollster::block_on(setup(bgcolour));
+    let vert_dat = make_draw_data();
+
+    let graphics = pollster::block_on(setup(vert_dat, bgcolour));
 
     pollster::block_on(run(graphics, fp));
+    
+    
+    
 }
 
 
