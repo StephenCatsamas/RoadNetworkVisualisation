@@ -9,30 +9,41 @@ struct Vertex {
     colour: [f32; 3],
 }
 
+struct Graphics<'a>{
+    device : wgpu::Device,   
+    queue : wgpu::Queue,
+    vbuff_layout : wgpu::VertexBufferLayout<'a>,
+    tex_desc : Option<wgpu::TextureDescriptor<'a>>,
+    texture : Option<wgpu::Texture>,
+    tex_view : Option<wgpu::TextureView>,
+    tex_size : u32,
+    render_pipeline : Option<wgpu::RenderPipeline>,
+    encoder : Option<wgpu::CommandEncoder>,
+    output_buffer : Option<wgpu::Buffer>,
+}
 
-async fn run(fp : &str, bgcolour : wgpu::Color) {
 
+fn draw(graphics : &Graphics) -> (wgpu::Buffer, u32){
     let v1 = Vertex { position: [0.0, 0.5], colour: [1.0, 0.0, 0.0] };
-    let v2 = Vertex { position: [-0.2, -0.8], colour: [0.0, 1.0, 1.0] };
+    let v2 = Vertex { position: [-0.2, -0.8], colour: [1.0, 1.0, 1.0] };
+    
+    let l1 = line2tris(v1,v2, 0.05);
+    
+    let v1 = Vertex { position: [0.4, 0.0], colour: [1.0, 0.5, 0.0] };
+    let v2 = Vertex { position: [-0.2, 0.8], colour: [0.0, 0.0, 1.0] };
+    
+    let l2 = line2tris(v1,v2, 0.01);
 
-    let vertex_data = line2tris(v1,v2, 0.05);
+
+    let mut vertex_data = Vec::<Vertex>::new();
+    
+    vertex_data.extend(l1);
+    vertex_data.extend(l2);
+    
+    
     let verticies = &vertex_data;
 
-    let instance = wgpu::Instance::new(wgpu::Backends::all());
-    let adapter = instance
-        .request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::default(),
-            compatible_surface: None,
-            force_fallback_adapter: false,
-        })
-        .await
-        .unwrap();
-    let (device, queue) = adapter
-        .request_device(&Default::default(), None)
-        .await
-        .unwrap();
-
-    let vertex_buffer = device.create_buffer_init(
+    let vertex_buffer = graphics.device.create_buffer_init(
         &wgpu::util::BufferInitDescriptor {
             label : Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(verticies),
@@ -40,83 +51,36 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
         }
     );
     
+    let size = verticies.len() as u32;
     
-    let vertex_buffer_layout = wgpu::VertexBufferLayout {
-        array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress, // 1.
-        step_mode: wgpu::VertexStepMode::Vertex, // 2.
-        attributes: &[ // 3.
-            wgpu::VertexAttribute {
-                offset: 0, // 4.
-                shader_location: 0, // 5.
-                format: wgpu::VertexFormat::Float32x2, // 6.
-            },
-            wgpu::VertexAttribute {
-                offset: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
-                shader_location: 1,
-                format: wgpu::VertexFormat::Float32x3,
-            }
-        ]
-    };
+    return (vertex_buffer,size);
+}
 
-    let texture_size = 256u32;//size of square texture
-    
-    let texture_desc = wgpu::TextureDescriptor {
-        size: wgpu::Extent3d {
-            width: texture_size,
-            height: texture_size,
-            depth_or_array_layers: 1,
-        },
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
-        usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        label: None,
-    };
-    let texture = device.create_texture(&texture_desc);
-    let texture_view = texture.create_view(&Default::default());
-
-    // we need to store this for later
-    let u32_size = std::mem::size_of::<u32>() as u32;
-
-    let output_buffer_size = (u32_size * texture_size * texture_size) as wgpu::BufferAddress;
-    let output_buffer_desc = wgpu::BufferDescriptor {
-        size: output_buffer_size,
-        usage: wgpu::BufferUsages::COPY_DST
-            // this tells wpgu that we want to read this buffer from the cpu
-            | wgpu::BufferUsages::MAP_READ,
-        label: None,
-        mapped_at_creation: false,
-    };
-    let output_buffer = device.create_buffer(&output_buffer_desc);
-
-    let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+fn make_render_pipeline(graphics : &Graphics) -> wgpu::RenderPipeline{
+    let shader = graphics.device.create_shader_module(&wgpu::ShaderModuleDescriptor {
         label: Some("Vertex Shader"),
         source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
     });
 
-
-    let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+    let render_pipeline_layout = graphics.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("Render Pipeline Layout"),
         bind_group_layouts: &[],
         push_constant_ranges: &[],
     });
 
-    
-
-    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+    let render_pipeline = graphics.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: Some("Render Pipeline"),
         layout: Some(&render_pipeline_layout),
         vertex: wgpu::VertexState {
             module: &shader,
             entry_point: "vs_main",
-            buffers: &[vertex_buffer_layout],
+            buffers: &[graphics.vbuff_layout.clone()],
         },
         fragment: Some(wgpu::FragmentState {
             module: &shader,
             entry_point: "fs_main",
             targets: &[wgpu::ColorTargetState {
-                format: texture_desc.format,
+                format: graphics.tex_desc.as_ref().unwrap().format,
                 blend: Some(wgpu::BlendState {
                     alpha: wgpu::BlendComponent::REPLACE,
                     color: wgpu::BlendComponent::REPLACE,
@@ -143,15 +107,110 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
             alpha_to_coverage_enabled: false,
         },
     });
+    
+    return render_pipeline;
+}
+
+async fn run(fp : &str, bgcolour : wgpu::Color) {
+
+
+    let instance = wgpu::Instance::new(wgpu::Backends::all());
+    
+    let adapter = instance
+        .request_adapter(&wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::default(),
+            compatible_surface: None,
+            force_fallback_adapter: false,
+        })
+        .await
+        .unwrap();
+        
+    let (device, queue) = adapter
+        .request_device(&Default::default(), None)
+        .await
+        .unwrap();
+
+    let vertex_buffer_layout = wgpu::VertexBufferLayout {
+        array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress, // 1.
+        step_mode: wgpu::VertexStepMode::Vertex, // 2.
+        attributes: &[ // 3.
+            wgpu::VertexAttribute {
+                offset: 0, // 4.
+                shader_location: 0, // 5.
+                format: wgpu::VertexFormat::Float32x2, // 6.
+            },
+            wgpu::VertexAttribute {
+                offset: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
+                shader_location: 1,
+                format: wgpu::VertexFormat::Float32x3,
+            }
+        ]
+    };
+
+    let mut graphics = Graphics {
+        device : device,
+        queue : queue,
+        vbuff_layout : vertex_buffer_layout,
+        tex_size : 256, //must be a multiple of 64
+        tex_desc : None,
+        texture : None,
+        tex_view : None,
+        render_pipeline : None,
+        encoder : None,
+        output_buffer : None,
+    };
+    
+
+    let texture_desc = wgpu::TextureDescriptor {
+        size: wgpu::Extent3d {
+            width: graphics.tex_size,
+            height: graphics.tex_size,
+            depth_or_array_layers: 1,
+        },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        label: None,
+    };
+    
+    let texture = graphics.device.create_texture(&texture_desc);
+    let texture_view = texture.create_view(&Default::default());
+
+    graphics.tex_desc = Some(texture_desc);
+    graphics.texture = Some(texture);
+    graphics.tex_view = Some(texture_view);
+
+
+    // we need to store this for later
+    let u32_size = std::mem::size_of::<u32>() as u32;
+
+    let output_buffer_size = (u32_size * graphics.tex_size * graphics.tex_size) as wgpu::BufferAddress;
+    let output_buffer_desc = wgpu::BufferDescriptor {
+        size: output_buffer_size,
+        usage: wgpu::BufferUsages::COPY_DST
+            // this tells wpgu that we want to read this buffer from the cpu
+            | wgpu::BufferUsages::MAP_READ,
+        label: None,
+        mapped_at_creation: false,
+    };
+    graphics.output_buffer = Some(graphics.device.create_buffer(&output_buffer_desc));
+
+    
+
+    graphics.render_pipeline = Some(make_render_pipeline(&graphics));
 
     let mut encoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        graphics.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+
+    graphics.encoder = Some(encoder);
 
     {
         let render_pass_desc = wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[wgpu::RenderPassColorAttachment {
-                view: &texture_view,
+                view: &graphics.tex_view.as_ref().unwrap(),
                 resolve_target: None,
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(bgcolour),
@@ -160,56 +219,68 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
             }],
             depth_stencil_attachment: None,
         };
-        let mut render_pass = encoder.begin_render_pass(&render_pass_desc);
+        
+        
+        let (vertex_buffer,vbuff_size) = draw(&graphics); 
+        
+        let render_pipeline = graphics.render_pipeline.as_ref().unwrap();
+        let mut render_pass = graphics.encoder.unwrap().begin_render_pass(&render_pass_desc);
 
         render_pass.set_pipeline(&render_pipeline);
         
+
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-        render_pass.draw(0..(verticies.len() as u32), 0..1);
+        render_pass.draw(0..vbuff_size, 0..1);
     }
 
-    encoder.copy_texture_to_buffer(
+    
+
+    save_buffer(&graphics, fp);
+    
+    
+
+}
+
+async fn save_buffer(graphics : &Graphics, fp : &str ){
+    let u32_size = std::mem::size_of::<u32>() as u32;
+
+    graphics.encoder.as_ref().unwrap().copy_texture_to_buffer(
         wgpu::ImageCopyTexture {
             aspect: wgpu::TextureAspect::All,
-            texture: &texture,
+            texture: graphics.texture.as_ref().unwrap(),
             mip_level: 0,
             origin: wgpu::Origin3d::ZERO,
         },
         wgpu::ImageCopyBuffer {
-            buffer: &output_buffer,
+            buffer: &graphics.output_buffer.unwrap(),
             layout: wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: NonZeroU32::new(u32_size * texture_size),
-                rows_per_image: NonZeroU32::new(texture_size),
+                bytes_per_row: NonZeroU32::new(u32_size * graphics.tex_size),
+                rows_per_image: NonZeroU32::new(graphics.tex_size),
             },
         },
-        texture_desc.size,
+        graphics.tex_desc.as_ref().unwrap().size,
     );
 
-    queue.submit(Some(encoder.finish()));
+    graphics.queue.submit(Some(graphics.encoder.as_ref().unwrap().finish()));
     
-    let buffer_slice = output_buffer.slice(..);
+    let buffer_slice = graphics.output_buffer.as_ref().unwrap().slice(..);
 
     // NOTE: We have to create the mapping THEN device.poll() before await
     // the future. Otherwise the application will freeze.
     let mapping = buffer_slice.map_async(wgpu::MapMode::Read);
-    device.poll(wgpu::Maintain::Wait);
+    graphics.device.poll(wgpu::Maintain::Wait);
     mapping.await.unwrap();
 
-    save_buffer(&buffer_slice, texture_size, fp);
-    
-    
-    output_buffer.unmap();
-}
-
-fn save_buffer(buffer_slice : &wgpu::BufferSlice, texture_size : u32, fp : &str ){
 
     let data = buffer_slice.get_mapped_range();
 
     use image::{ImageBuffer, Rgba};
     let buffer =
-        ImageBuffer::<Rgba<u8>, _>::from_raw(texture_size, texture_size, data).unwrap();
+        ImageBuffer::<Rgba<u8>, _>::from_raw(graphics.tex_size, graphics.tex_size, data).unwrap();
     buffer.save(fp).unwrap();
+    
+    graphics.output_buffer.as_ref().unwrap().unmap();
 }
 
 
