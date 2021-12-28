@@ -13,24 +13,19 @@ struct Graphics<'a>{
     device : wgpu::Device,   
     queue : wgpu::Queue,
     vbuff_layout : wgpu::VertexBufferLayout<'a>,
-    tex_desc : Option<wgpu::TextureDescriptor<'a>>,
-    texture : Option<wgpu::Texture>,
-    tex_view : Option<wgpu::TextureView>,
     tex_size : u32,
     render_pipeline : Option<wgpu::RenderPipeline>,
-    encoder : Option<wgpu::CommandEncoder>,
-    output_buffer : Option<wgpu::Buffer>,
 }
 
 
 fn draw(graphics : &Graphics) -> (wgpu::Buffer, u32){
-    let v1 = Vertex { position: [0.0, 0.5], colour: [1.0, 0.0, 0.0] };
-    let v2 = Vertex { position: [-0.2, -0.8], colour: [1.0, 1.0, 1.0] };
+    let v1 = Vertex { position: [0.0, 0.5], colour: [1.0, 0.0, 1.0] };
+    let v2 = Vertex { position: [-0.2, -0.8], colour: [0.0, 0.0, 0.0] };
     
     let l1 = line2tris(v1,v2, 0.05);
     
     let v1 = Vertex { position: [0.4, 0.0], colour: [1.0, 0.5, 0.0] };
-    let v2 = Vertex { position: [-0.2, 0.8], colour: [0.0, 0.0, 1.0] };
+    let v2 = Vertex { position: [-0.2, 0.8], colour: [0.0, 1.0, 1.0] };
     
     let l2 = line2tris(v1,v2, 0.01);
 
@@ -56,7 +51,7 @@ fn draw(graphics : &Graphics) -> (wgpu::Buffer, u32){
     return (vertex_buffer,size);
 }
 
-fn make_render_pipeline(graphics : &Graphics) -> wgpu::RenderPipeline{
+fn make_render_pipeline(graphics : &Graphics, texture_desc : &wgpu::TextureDescriptor) -> wgpu::RenderPipeline{
     let shader = graphics.device.create_shader_module(&wgpu::ShaderModuleDescriptor {
         label: Some("Vertex Shader"),
         source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
@@ -80,7 +75,7 @@ fn make_render_pipeline(graphics : &Graphics) -> wgpu::RenderPipeline{
             module: &shader,
             entry_point: "fs_main",
             targets: &[wgpu::ColorTargetState {
-                format: graphics.tex_desc.as_ref().unwrap().format,
+                format: texture_desc.format,
                 blend: Some(wgpu::BlendState {
                     alpha: wgpu::BlendComponent::REPLACE,
                     color: wgpu::BlendComponent::REPLACE,
@@ -152,12 +147,7 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
         queue : queue,
         vbuff_layout : vertex_buffer_layout,
         tex_size : 256, //must be a multiple of 64
-        tex_desc : None,
-        texture : None,
-        tex_view : None,
         render_pipeline : None,
-        encoder : None,
-        output_buffer : None,
     };
     
 
@@ -178,10 +168,6 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
     let texture = graphics.device.create_texture(&texture_desc);
     let texture_view = texture.create_view(&Default::default());
 
-    graphics.tex_desc = Some(texture_desc);
-    graphics.texture = Some(texture);
-    graphics.tex_view = Some(texture_view);
-
 
     // we need to store this for later
     let u32_size = std::mem::size_of::<u32>() as u32;
@@ -195,22 +181,20 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
         label: None,
         mapped_at_creation: false,
     };
-    graphics.output_buffer = Some(graphics.device.create_buffer(&output_buffer_desc));
+    let output_buffer = graphics.device.create_buffer(&output_buffer_desc);
 
     
 
-    graphics.render_pipeline = Some(make_render_pipeline(&graphics));
+    graphics.render_pipeline = Some(make_render_pipeline(&graphics, &texture_desc));
 
     let mut encoder =
         graphics.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-
-    graphics.encoder = Some(encoder);
 
     {
         let render_pass_desc = wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[wgpu::RenderPassColorAttachment {
-                view: &graphics.tex_view.as_ref().unwrap(),
+                view: &texture_view,
                 resolve_target: None,
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(bgcolour),
@@ -221,50 +205,37 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
         };
         
         
-        let (vertex_buffer,vbuff_size) = draw(&graphics); 
-        
-        let render_pipeline = graphics.render_pipeline.as_ref().unwrap();
-        let mut render_pass = graphics.encoder.unwrap().begin_render_pass(&render_pass_desc);
+        let (vertex_buffer,size) = draw(&graphics);
+        let render_pipeline = graphics.render_pipeline.unwrap();
+        let mut render_pass = encoder.begin_render_pass(&render_pass_desc);
 
         render_pass.set_pipeline(&render_pipeline);
         
-
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-        render_pass.draw(0..vbuff_size, 0..1);
+        render_pass.draw(0..size, 0..1);
     }
 
-    
-
-    save_buffer(&graphics, fp);
-    
-    
-
-}
-
-async fn save_buffer(graphics : &Graphics, fp : &str ){
-    let u32_size = std::mem::size_of::<u32>() as u32;
-
-    graphics.encoder.as_ref().unwrap().copy_texture_to_buffer(
+    encoder.copy_texture_to_buffer(
         wgpu::ImageCopyTexture {
             aspect: wgpu::TextureAspect::All,
-            texture: graphics.texture.as_ref().unwrap(),
+            texture: &texture,
             mip_level: 0,
             origin: wgpu::Origin3d::ZERO,
         },
         wgpu::ImageCopyBuffer {
-            buffer: &graphics.output_buffer.unwrap(),
+            buffer: &output_buffer,
             layout: wgpu::ImageDataLayout {
                 offset: 0,
                 bytes_per_row: NonZeroU32::new(u32_size * graphics.tex_size),
                 rows_per_image: NonZeroU32::new(graphics.tex_size),
             },
         },
-        graphics.tex_desc.as_ref().unwrap().size,
+        texture_desc.size,
     );
 
-    graphics.queue.submit(Some(graphics.encoder.as_ref().unwrap().finish()));
+    graphics.queue.submit(Some(encoder.finish()));
     
-    let buffer_slice = graphics.output_buffer.as_ref().unwrap().slice(..);
+    let buffer_slice = output_buffer.slice(..);
 
     // NOTE: We have to create the mapping THEN device.poll() before await
     // the future. Otherwise the application will freeze.
@@ -272,16 +243,22 @@ async fn save_buffer(graphics : &Graphics, fp : &str ){
     graphics.device.poll(wgpu::Maintain::Wait);
     mapping.await.unwrap();
 
+    save_buffer(&buffer_slice, graphics.tex_size, fp);
+    
+    
+    output_buffer.unmap();
+}
+
+fn save_buffer(buffer_slice : &wgpu::BufferSlice, texture_size : u32, fp : &str ){
 
     let data = buffer_slice.get_mapped_range();
 
     use image::{ImageBuffer, Rgba};
     let buffer =
-        ImageBuffer::<Rgba<u8>, _>::from_raw(graphics.tex_size, graphics.tex_size, data).unwrap();
+        ImageBuffer::<Rgba<u8>, _>::from_raw(texture_size, texture_size, data).unwrap();
     buffer.save(fp).unwrap();
-    
-    graphics.output_buffer.as_ref().unwrap().unmap();
 }
+
 
 
 fn main() {

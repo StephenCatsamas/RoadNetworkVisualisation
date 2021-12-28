@@ -12,6 +12,7 @@ run: all
     app\main.py
 
 runr: rust
+    @del outfile.png
     @maptoolslib\target\debug\maptools.exe
     @outfile.png
 
