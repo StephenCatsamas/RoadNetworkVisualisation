@@ -171,8 +171,7 @@ fn make_texture_descriptor(graphics : &Graphics) -> wgpu::TextureDescriptor<'sta
     return tex_desc;
 }
 
-async fn run(fp : &str, bgcolour : wgpu::Color) {
-
+async fn setup(bgcolour : wgpu::Color) -> Graphics<'static>{
     let instance = wgpu::Instance::new(wgpu::Backends::all());
     
     let adapter = instance
@@ -244,8 +243,11 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
         
     }
     graphics.encoder = Some(encoder);
+    return graphics;
+}
 
-    
+async fn run(mut graphics : Graphics<'_>, fp : &str) {
+
     let output_buffer = graphics.output_buffer.take().unwrap();
     let mut encoder = graphics.encoder.take().unwrap();
 
@@ -304,7 +306,9 @@ fn main() {
     let fp = "outfile.png";
     let bgcolour = wgpu::Color {r: 0.1, g: 0.1, b: 0.1, a: 1.0,};
 
-    pollster::block_on(run(fp , bgcolour));
+    let graphics = pollster::block_on(setup(bgcolour));
+
+    pollster::block_on(run(graphics, fp));
 }
 
 
