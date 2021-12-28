@@ -14,12 +14,35 @@ struct Graphics<'a>{
     queue : wgpu::Queue,
     vbuff_layout : wgpu::VertexBufferLayout<'a>,
     tex_size : u32,
+    tex_desc : Option<wgpu::TextureDescriptor<'a>>,
+    texture : Option<wgpu::Texture>,
     render_pipeline : Option<wgpu::RenderPipeline>,
     output_buffer : Option<wgpu::Buffer>,
     encoder : Option<wgpu::CommandEncoder>,
 }
 
- 
+fn make_vertex_buffer_layout() -> wgpu::VertexBufferLayout<'static>{
+    let vbl = wgpu::VertexBufferLayout {
+        array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress, // 1.
+        step_mode: wgpu::VertexStepMode::Vertex, // 2.
+        attributes: &[ // 3.
+            wgpu::VertexAttribute {
+                offset: 0, // 4.
+                shader_location: 0, // 5.
+                format: wgpu::VertexFormat::Float32x2, // 6.
+            },
+            wgpu::VertexAttribute {
+                offset: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
+                shader_location: 1,
+                format: wgpu::VertexFormat::Float32x3,
+            }
+        ]
+    };
+    return vbl;
+}
+
+
+
 fn draw(graphics : &Graphics) -> (wgpu::Buffer, u32){
     let v1 = Vertex { position: [0.0, 0.5], colour: [1.0, 1.0, 1.0] };
     let v2 = Vertex { position: [-0.2, -0.8], colour: [1.0, 0.0, 0.0] };
@@ -29,13 +52,19 @@ fn draw(graphics : &Graphics) -> (wgpu::Buffer, u32){
     let v1 = Vertex { position: [0.4, 0.8], colour: [1.0, 0.5, 0.0] };
     let v2 = Vertex { position: [-0.2, 0.8], colour: [0.0, 1.0, 1.0] };
     
-    let l2 = line2tris(v1,v2, 0.01);
+    let l2 = line2tris(v1,v2, 0.02);
+    
+    let v1 = Vertex { position: [0.0, 0.6], colour: [1.0, 0.5, 1.0] };
+    let v2 = Vertex { position: [-0.5, 0.8], colour: [0.0, 0.2, 0.3] };
+    
+    let l3 = line2tris(v1,v2, 0.1);
 
 
     let mut vertex_data = Vec::<Vertex>::new();
     
     vertex_data.extend(l1);
     vertex_data.extend(l2);
+    vertex_data.extend(l3);
     
     
     let verticies = &vertex_data;
@@ -124,8 +153,25 @@ fn make_output_buffer(graphics : &Graphics) -> wgpu::Buffer{
     return graphics.device.create_buffer(&output_buffer_desc)
 }
 
-async fn run(fp : &str, bgcolour : wgpu::Color) {
+fn make_texture_descriptor(graphics : &Graphics) -> wgpu::TextureDescriptor<'static>{
+    let tex_size = graphics.tex_size;
+    let tex_desc = wgpu::TextureDescriptor {
+        size: wgpu::Extent3d {
+            width: tex_size,
+            height: tex_size,
+            depth_or_array_layers: 1,
+        },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        label: None,
+    };
+    return tex_desc;
+}
 
+async fn run(fp : &str, bgcolour : wgpu::Color) {
 
     let instance = wgpu::Instance::new(wgpu::Backends::all());
     
@@ -143,60 +189,31 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
         .await
         .unwrap();
 
-    let vertex_buffer_layout = wgpu::VertexBufferLayout {
-        array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress, // 1.
-        step_mode: wgpu::VertexStepMode::Vertex, // 2.
-        attributes: &[ // 3.
-            wgpu::VertexAttribute {
-                offset: 0, // 4.
-                shader_location: 0, // 5.
-                format: wgpu::VertexFormat::Float32x2, // 6.
-            },
-            wgpu::VertexAttribute {
-                offset: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
-                shader_location: 1,
-                format: wgpu::VertexFormat::Float32x3,
-            }
-        ]
-    };
+    let vertex_buffer_layout = make_vertex_buffer_layout();
 
     let mut graphics = Graphics {
         device : device,
         queue : queue,
         vbuff_layout : vertex_buffer_layout,
         tex_size : 256, //must be a multiple of 64
+        tex_desc : None,
+        texture : None,
         render_pipeline : None,
         output_buffer : None,
         encoder : None,
     };
     
 
-    let texture_desc = wgpu::TextureDescriptor {
-        size: wgpu::Extent3d {
-            width: graphics.tex_size,
-            height: graphics.tex_size,
-            depth_or_array_layers: 1,
-        },
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
-        usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        label: None,
-    };
-    
-    let texture = graphics.device.create_texture(&texture_desc);
-    let texture_view = texture.create_view(&Default::default());
-
-    
+    graphics.tex_desc = Some(make_texture_descriptor(&graphics));
+    graphics.texture = Some(graphics.device.create_texture(graphics.tex_desc.as_ref().unwrap()));
     graphics.output_buffer = Some(make_output_buffer(&graphics));
-    graphics.render_pipeline = Some(make_render_pipeline(&graphics, &texture_desc));
+    graphics.render_pipeline = Some(make_render_pipeline(&graphics, graphics.tex_desc.as_ref().unwrap()));
     graphics.encoder = Some(graphics.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None }));
-    // let mut encoder = graphics.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-
 
     let mut encoder = graphics.encoder.take().unwrap();
+    
     {
+        let texture_view = graphics.texture.as_ref().unwrap().create_view(&Default::default());
         let render_pass_desc = wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[wgpu::RenderPassColorAttachment {
@@ -228,8 +245,11 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
     }
     graphics.encoder = Some(encoder);
 
+    
     let output_buffer = graphics.output_buffer.take().unwrap();
     let mut encoder = graphics.encoder.take().unwrap();
+
+    let texture = graphics.texture.as_ref().unwrap();
 
     let u32_size = std::mem::size_of::<u32>() as u32;
     encoder.copy_texture_to_buffer(
@@ -247,7 +267,7 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
                 rows_per_image: NonZeroU32::new(graphics.tex_size),
             },
         },
-        texture_desc.size,
+        graphics.tex_desc.as_ref().unwrap().size,
     );
 
     graphics.queue.submit(Some(encoder.finish()));
@@ -259,6 +279,7 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
     let mapping = buffer_slice.map_async(wgpu::MapMode::Read);
     graphics.device.poll(wgpu::Maintain::Wait);
     mapping.await.unwrap();
+    
 
     save_buffer(&graphics, &buffer_slice, fp);
     
@@ -267,13 +288,14 @@ async fn run(fp : &str, bgcolour : wgpu::Color) {
 }
 
 fn save_buffer(graphics : &Graphics, buffer_slice : &wgpu::BufferSlice, fp : &str ){
-
+ 
     let data = buffer_slice.get_mapped_range();
 
     use image::{ImageBuffer, Rgba};
     let buffer =
         ImageBuffer::<Rgba<u8>, _>::from_raw(graphics.tex_size, graphics.tex_size, data).unwrap();
     buffer.save(fp).unwrap();
+
 }
 
 
