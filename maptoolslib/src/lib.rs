@@ -305,15 +305,16 @@ fn save_buffer(graphics : &Graphics, buffer_slice : &wgpu::BufferSlice, fp : &st
 
 }
 
-fn make_draw_data(line : Line) -> Vec::<Vertex>{
-
+fn make_draw_data(lines : Vec<Line>) -> Vec::<Vertex>{
     
-    let l1 = line2tris(line);
-
-
     let mut vertex_data = Vec::<Vertex>::new();
     
-    vertex_data.extend(l1);
+    let liter = lines.iter();
+    
+    for line in liter {
+        let tris = line2tris(&line);
+        vertex_data.extend(tris);
+    }
 
     return vertex_data;
 }
@@ -358,17 +359,30 @@ impl Line{
 
 }
 
+fn linesfrompy(py: Python, lines: PyObject) -> Vec<Line> {
+    let liter = lines.iter(py).unwrap();
 
-fn drawlines(py: Python, line: PyObject) -> PyResult<u64> {
+    let mut lines = Vec::<Line>::new();
+
+    for line in liter {
+        let ln = Line::frompy(py,line.unwrap());
+        lines.push(ln);
+    }
+    
+    return lines; 
+
+}
+
+fn drawlines(py: Python, lines: PyObject) -> PyResult<u64> {
     let fp = "outfile.png";
     let bgcolour = wgpu::Color {r: 0.1, g: 0.1, b: 0.1, a: 1.0,};
 
 
-    let line = Line::frompy(py,line);
+    let lines = linesfrompy(py,lines);
 
     
     
-    let vert_dat = make_draw_data(line);
+    let vert_dat = make_draw_data(lines);
 
     let graphics = pollster::block_on(setup(vert_dat, bgcolour));
 
@@ -457,7 +471,7 @@ fn normal(from : Vertex,to : Vertex) -> Vertex{
     
 }
 
-fn line2tris(line : Line) -> [Vertex; 6]{
+fn line2tris(line : &Line) -> [Vertex; 6]{
     
     let width = line.width;
     

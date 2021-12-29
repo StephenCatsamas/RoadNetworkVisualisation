@@ -11,9 +11,9 @@ if __name__ == "__main__":
     print('Initiating road network visualisation')
     print(maptoolslib.__doc__)
     
-    l1 = Line((-0.2,0.3), (0.4,-0.6), 0.2, (0.6,0.4,0.2))
-    
-    print(maptoolslib.drawlines(l1))
-    # print(maptoolslib.drawlines(l1))
+    lines = [Line((i/20,0.8), (0,0), 0.01, (i/20,0,1-(i/20))) for i in range(20)]
+
+    maptoolslib.drawlines(lines)
+
     # ui.begin()
 
