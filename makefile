@@ -2,18 +2,18 @@ default: all
 
 rust:
     @cd maptoolslib
-    cargo build --release
+    cargo build
     @cd ..
 
 all: rust    
-    copy maptoolslib\target\release\maptoolslib.dll app\src\maptoolslib.pyd
+    copy maptoolslib\target\debug\maptoolslib.dll app\src\maptoolslib.pyd
     
 run: all
     app\main.py
 
 runr: rust
     @del outfile.png
-    @maptoolslib\target\release\maptools.exe
+    @maptoolslib\target\debug\maptools.exe
     @outfile.png
 
 clean:

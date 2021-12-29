@@ -1,20 +1,25 @@
 #[macro_use]
 extern crate cpython;
 
-use cpython::{Python, PyResult};
+use cpython::{Python, PyResult, PyObject, ObjectProtocol};
 use std::num::NonZeroU32;
 use wgpu::util::DeviceExt;
 
 py_module_initializer!(maptoolslib, |py, m| {
     m.add(py, "__doc__", concat!("rust lib built at: ", include!(concat!(env!("OUT_DIR"), "/timestamp.txt"))))?;
-    m.add(py, "rust_test", py_fn!(py, rust_test(a: u64)))?;
+    m.add(py, "rust_test", py_fn!(py, rust_test(a: PyObject)))?;
     m.add(py, "drawlines", py_fn!(py, drawlines(a: u64)))?;
     Ok(())
 });
 
-fn rust_test(_py: Python, a: u64) -> PyResult<u64> {
 
-    Ok(a)
+fn rust_test(py: Python, a: PyObject) -> PyResult<u64> {
+    println!("{}", a);
+    
+    let to = a.getattr(py, "to").unwrap();
+    println!("{}", to);
+    
+    Ok(7)
 }
 
 
