@@ -14,8 +14,10 @@ all: rust
     copy maptoolslib\target\debug\maptoolslib.dll app\src\maptoolslib.pyd
     
 run: all
-    app\main.py
-
+    @cd app
+    main.py
+    @cd ..
+    
 runr: rust
     @del outfile.png
     @maptoolslib\target\debug\maptools.exe

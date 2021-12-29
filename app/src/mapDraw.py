@@ -1,10 +1,31 @@
 import os
 import math
-import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
 import csv
 import numpy as np
 import time
+
+from . import maptoolslib
+
+class Line():
+    def __init__(self, to = None, fm = None, width = None, colour = None):
+        self.to = (0.0, 0.0) if to == None else to
+        self.fm = (0.0, 1.0) if fm == None else fm
+        self.width = 0.1 if width == None else width
+        self.colour = (1.0,1.0,1.0) if colour == None else colour
+
+
+    # lines = [Line((i/20,0.8), (0,0), 0.01, (i/20,0,1-(i/20))) for i in range(20)]
+
+    # maptoolslib.drawlines(lines, "1.png")
+
+def compatify(p,view):
+    lat,lon,range = view
+
+    x = (2*(p[0]-lon))/range -1
+    y = (2*(p[1]-lat))/range -1
+    # print(x,y)
+    return (x, y)
+    
 
 def draw(file, args):
         
@@ -30,9 +51,11 @@ def draw(file, args):
             reader = csv.reader(csvfile, delimiter=';',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-            seg = np.zeros((0,2,2))
-            ln = np.zeros((2,2))
-            colours = np.zeros((0,3))
+            # seg = np.zeros((0,2,2))
+            # ln = np.zeros((2,2))
+            # colours = np.zeros((0,3))
+
+            lines = []
 
             i = 0
 
@@ -41,45 +64,31 @@ def draw(file, args):
                 lon = eval(row[0])
                 lat = eval(row[1])
                 col = eval(row[2])
-
-                p1 = [lon[0],lat[0]]
-                p2 = [lon[1],lat[1]]
-
-                ln[0,:] = p1
-                ln[1,:] = p2
                 
-                seg = np.append(seg, [ln], axis = 0)
-                colours = np.append(colours, [col], axis = 0)
-              
+                view = (flat,flon,args.stp/args.blk)
 
+                p1 = compatify((lon[0],lat[0]),view)
+                p2 = compatify((lon[1],lat[1]),view)
+                
+                l = Line(p1,p2,args.seg_width, col)
+                
+                lines.append(l)
+                
                 if (i % 6000 == 0):
                     print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
                     
-                if (i % 12000 == 0):
-                    linecolls.append(LineCollection(seg, linewidths= args.seg_width ,linestyle='solid', colors = colours))
+                # if (i % 12000 == 0):
+                    # linecolls.append(LineCollection(seg, linewidths= args.seg_width ,linestyle='solid', colors = colours))
                     
-                    seg = np.zeros((0,2,2))
-                    ln = np.zeros((2,2))
-                    colours = np.zeros((0,3))
+                    # seg = np.zeros((0,2,2))
+                    # ln = np.zeros((2,2))
+                    # colours = np.zeros((0,3))
             
            
-            linecolls.append(LineCollection(seg, linewidths= args.seg_width ,linestyle='solid', colors = colours))
+            # linecolls.append(LineCollection(seg, linewidths= args.seg_width ,linestyle='solid', colors = colours))
     
+        # ax.set_aspect(1/(math.cos(math.radians(args.Nf))))
             
-        fig, ax = plt.subplots(frameon=False)
-
-        ax.set_ylim(flat, flat+(args.stp/args.blk))
-        ax.set_xlim(flon, flon+(args.stp/args.blk))
-
-        ax.set_axis_off()
-        
-        fig.set_size_inches(1, 1)
-
-        for coll in linecolls:
-            ax.add_collection(coll)
-            
-        ax.set_aspect(1/(math.cos(math.radians(args.Nf))))
-        plt.savefig(fout, dpi = args.res, bbox_inches = 'tight', pad_inches=0, transparent=True)
-        plt.close()
+        maptoolslib.drawlines(lines,fout)
 
 

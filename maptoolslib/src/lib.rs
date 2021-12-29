@@ -8,7 +8,7 @@ use wgpu::util::DeviceExt;
 py_module_initializer!(maptoolslib, |py, m| {
     m.add(py, "__doc__", concat!("rust lib built at: ", include!(concat!(env!("OUT_DIR"), "/timestamp.txt"))))?;
     m.add(py, "rust_test", py_fn!(py, rust_test(a: PyObject)))?;
-    m.add(py, "drawlines", py_fn!(py, drawlines(line: PyObject)))?;
+    m.add(py, "drawlines", py_fn!(py, drawlines(line: PyObject, fp: &str)))?;
     Ok(())
 });
 
@@ -199,7 +199,7 @@ async fn setup(vert_dat : Vec::<Vertex>, bgcolour : wgpu::Color) -> Graphics<'st
         device : device,
         queue : queue,
         vbuff_layout : vertex_buffer_layout,
-        tex_size : 256, //must be a multiple of 64
+        tex_size : 512, //must be a multiple of 64
         tex_desc : None,
         texture : None,
         render_pipeline : None,
@@ -373,8 +373,7 @@ fn linesfrompy(py: Python, lines: PyObject) -> Vec<Line> {
 
 }
 
-fn drawlines(py: Python, lines: PyObject) -> PyResult<u64> {
-    let fp = "outfile.png";
+fn drawlines(py: Python, lines: PyObject, fp: &str) -> PyResult<u64> {
     let bgcolour = wgpu::Color {r: 0.1, g: 0.1, b: 0.1, a: 1.0,};
 
 
