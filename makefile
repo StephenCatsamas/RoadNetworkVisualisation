@@ -5,6 +5,11 @@ rust:
     cargo build
     @cd ..
 
+rustt:
+    @cd maptoolslib
+    cargo test 
+    @cd ..
+
 all: rust    
     copy maptoolslib\target\debug\maptoolslib.dll app\src\maptoolslib.pyd
     

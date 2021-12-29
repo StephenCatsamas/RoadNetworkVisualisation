@@ -8,7 +8,7 @@ use wgpu::util::DeviceExt;
 py_module_initializer!(maptoolslib, |py, m| {
     m.add(py, "__doc__", concat!("rust lib built at: ", include!(concat!(env!("OUT_DIR"), "/timestamp.txt"))))?;
     m.add(py, "rust_test", py_fn!(py, rust_test(a: PyObject)))?;
-    m.add(py, "drawlines", py_fn!(py, drawlines(a: u64)))?;
+    m.add(py, "drawlines", py_fn!(py, drawlines(line: PyObject)))?;
     Ok(())
 });
 
@@ -17,12 +17,18 @@ fn rust_test(py: Python, a: PyObject) -> PyResult<u64> {
     println!("{}", a);
     
     let to = a.getattr(py, "to").unwrap();
-    println!("{}", to);
+    let tot = to.extract::<(f32,f32)>(py).unwrap();
+    // let tp : (f32, f32) = tot.extract::<>(py).unwrap();
+    print_type_of(&tot);
+    println!("{}", tot.0);
+    println!("{}", tot.1);
     
     Ok(7)
 }
 
-
+fn print_type_of<T>(_: &T) {
+    println!("{}", std::any::type_name::<T>())
+}
 
 
 #[repr(C)]
@@ -299,39 +305,70 @@ fn save_buffer(graphics : &Graphics, buffer_slice : &wgpu::BufferSlice, fp : &st
 
 }
 
-fn make_draw_data() -> Vec::<Vertex>{
-    let v1 = Vertex { position: [0.0, 0.5], colour: [1.0, 1.0, 1.0] };
-    let v2 = Vertex { position: [-0.2, -0.8], colour: [1.0, 0.0, 0.0] };
+fn make_draw_data(line : Line) -> Vec::<Vertex>{
+
     
-    let l1 = line2tris(v1,v2, 0.05);
-    
-    let v1 = Vertex { position: [0.4, 0.8], colour: [1.0, 0.5, 0.0] };
-    let v2 = Vertex { position: [-0.2, 0.8], colour: [0.0, 1.0, 1.0] };
-    
-    let l2 = line2tris(v1,v2, 0.02);
-    
-    let v1 = Vertex { position: [0.0, 0.6], colour: [1.0, 0.5, 1.0] };
-    let v2 = Vertex { position: [-0.5, 0.8], colour: [0.0, 0.2, 0.3] };
-    
-    let l3 = line2tris(v1,v2, 0.1);
+    let l1 = line2tris(line);
 
 
     let mut vertex_data = Vec::<Vertex>::new();
     
     vertex_data.extend(l1);
-    vertex_data.extend(l2);
-    vertex_data.extend(l3);
-    
-    
+
     return vertex_data;
 }
 
+struct Line{
+    to : [f32;2],
+    from : [f32;2],
+    colour : [f32;3],
+    width : f32,
+}
 
-fn drawlines(_py: Python, a: u64) -> PyResult<u64> {
+fn array2<T>(tuple: (T,T)) -> [T;2] { 
+    return [tuple.0,tuple.1];
+ }
+fn array3<T>(tuple: (T,T,T)) -> [T;3] { 
+    return [tuple.0,tuple.1, tuple.2];
+ }
+
+impl Line{
+    fn frompy(py: Python, line: PyObject) -> Line{           
+        let t = array2(line.getattr(py, "to").unwrap()
+                    .extract::<(f32,f32)>(py).unwrap());
+        
+        let f = array2(line.getattr(py, "fm").unwrap()
+                    .extract::<(f32,f32)>(py).unwrap());
+        
+        let c = array3(line.getattr(py, "colour").unwrap()
+                    .extract::<(f32,f32,f32)>(py).unwrap());
+        
+        let w = line.getattr(py, "width").unwrap()
+                    .extract(py).unwrap();
+        
+        let line = Line{
+            to : t,
+            from : f,
+            colour : c,
+            width : w,
+        };
+        return line;
+    
+    }
+
+}
+
+
+fn drawlines(py: Python, line: PyObject) -> PyResult<u64> {
     let fp = "outfile.png";
     let bgcolour = wgpu::Color {r: 0.1, g: 0.1, b: 0.1, a: 1.0,};
 
-    let vert_dat = make_draw_data();
+
+    let line = Line::frompy(py,line);
+
+    
+    
+    let vert_dat = make_draw_data(line);
 
     let graphics = pollster::block_on(setup(vert_dat, bgcolour));
 
@@ -420,7 +457,12 @@ fn normal(from : Vertex,to : Vertex) -> Vertex{
     
 }
 
-fn line2tris(from : Vertex,to : Vertex, width : f32) -> [Vertex; 6]{
+fn line2tris(line : Line) -> [Vertex; 6]{
+    
+    let width = line.width;
+    
+    let to = Vertex {position: line.to, colour : line.colour};
+    let from = Vertex {position: line.from, colour : line.colour};
     
     let normal: Vertex = normal(from, to);
     let ofset : Vertex = mul(normal,width/2.0);
