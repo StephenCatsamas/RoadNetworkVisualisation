@@ -17,7 +17,7 @@ def pull(args):
 
     tiles = int(math.ceil(dlat/args.stp) * math.ceil(dlon/args.stp))
 
-    for lat in range(args.S,args.N,args.stp):
+    for lat in range(args.N,args.S,-args.stp):
         for lon in range(args.W,args.E,args.stp):
             get = False
             
@@ -32,11 +32,11 @@ def pull(args):
                     
                     
                     Qstr = "https://overpass-api.de/api/interpreter?data=[bbox:"
-                    Qstr += str(lat/args.blk)
+                    Qstr += str((lat-args.stp)/args.blk)
                     Qstr += ','
                     Qstr += str(lon/args.blk)
                     Qstr += ','
-                    Qstr += str((lat+args.stp)/args.blk)
+                    Qstr += str(lat/args.blk)
                     Qstr += ','
                     Qstr += str((lon+args.stp)/args.blk)
                     Qstr += '];('

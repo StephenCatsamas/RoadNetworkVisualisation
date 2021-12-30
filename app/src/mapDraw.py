@@ -13,10 +13,10 @@ class Line():
         self.width = 0.1 if width == None else width
         self.colour = (1.0,1.0,1.0) if colour == None else colour
 
-
-    # lines = [Line((i/20,0.8), (0,0), 0.01, (i/20,0,1-(i/20))) for i in range(20)]
-
-    # maptoolslib.drawlines(lines, "1.png")
+class View():
+    def __init__(self, bounds = None, res = None):
+        self.bounds = (1.0,-1.0,1.0,-1.0) if bounds == None else bounds
+        self.res = 512.0 if res == None else res
 
 def compatify(p,view):
     lat,lon,range = view
@@ -65,10 +65,10 @@ def draw(file, args):
                 lat = eval(row[1])
                 col = eval(row[2])
                 
-                view = (flat,flon,args.stp/args.blk)
+               
 
-                p1 = compatify((lon[0],lat[0]),view)
-                p2 = compatify((lon[1],lat[1]),view)
+                p1 = (lat[0],lon[0])
+                p2 = (lat[1],lon[1])
                 
                 l = Line(p1,p2,args.seg_width, col)
                 
@@ -77,9 +77,10 @@ def draw(file, args):
                 if (i % 6000 == 0):
                     print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
                     
+        print(flat,flon)
+        view = View((flat,flat-args.stp,flon+args.stp,flon),1000)
     
-        # ax.set_aspect(1/(math.cos(math.radians(args.Nf))))
-            
-        maptoolslib.drawlines(lines,fout)
+        
+        maptoolslib.drawlines(lines,view,fout)
 
 

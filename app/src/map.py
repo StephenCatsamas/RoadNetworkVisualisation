@@ -11,8 +11,7 @@ from multiprocessing import Pool
 
 
 def run(args): 
-    
-        
+
     if args.flush_map_cache:
         for folder in args.folders:
             for root,dirs,files in os.walk(folder):
