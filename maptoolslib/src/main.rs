@@ -83,8 +83,8 @@ fn make_render_pipeline(graphics : &Graphics, texture_desc : &wgpu::TextureDescr
             targets: &[wgpu::ColorTargetState {
                 format: texture_desc.format,
                 blend: Some(wgpu::BlendState {
-                    alpha: wgpu::BlendComponent::REPLACE,
-                    color: wgpu::BlendComponent::REPLACE,
+                    alpha: wgpu::BlendComponent::OVER,
+                    color: wgpu::BlendComponent::OVER,
                 }),
                 write_mask: wgpu::ColorWrites::ALL,
             }],
@@ -103,9 +103,9 @@ fn make_render_pipeline(graphics : &Graphics, texture_desc : &wgpu::TextureDescr
         },
         depth_stencil: None,
         multisample: wgpu::MultisampleState {
-            count: 1,
+            count: 4,
             mask: !0,
-            alpha_to_coverage_enabled: false,
+            alpha_to_coverage_enabled: true,
         },
     });
     
@@ -128,7 +128,7 @@ fn make_output_buffer(graphics : &Graphics) -> wgpu::Buffer{
     return graphics.device.create_buffer(&output_buffer_desc)
 }
 
-fn make_texture_descriptor(graphics : &Graphics) -> wgpu::TextureDescriptor<'static>{
+fn make_texture_descriptor(graphics : &Graphics, samples:u32) -> wgpu::TextureDescriptor<'static>{
     let tex_size = graphics.tex_size;
     let tex_desc = wgpu::TextureDescriptor {
         size: wgpu::Extent3d {
@@ -137,7 +137,7 @@ fn make_texture_descriptor(graphics : &Graphics) -> wgpu::TextureDescriptor<'sta
             depth_or_array_layers: 1,
         },
         mip_level_count: 1,
-        sample_count: 1,
+        sample_count: samples,
         dimension: wgpu::TextureDimension::D2,
         format: wgpu::TextureFormat::Rgba8UnormSrgb,
         usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -179,8 +179,10 @@ async fn setup(vert_dat : Vec::<Vertex>, bgcolour : wgpu::Color) -> Graphics<'st
     };
     
 
-    graphics.tex_desc = Some(make_texture_descriptor(&graphics));
+    let tex_desc_msaa = make_texture_descriptor(&graphics,4);
+    graphics.tex_desc = Some(make_texture_descriptor(&graphics,1));
     graphics.texture = Some(graphics.device.create_texture(graphics.tex_desc.as_ref().unwrap()));
+    let texture_msaa = graphics.device.create_texture(&tex_desc_msaa);
     graphics.output_buffer = Some(make_output_buffer(&graphics));
     graphics.render_pipeline = Some(make_render_pipeline(&graphics, graphics.tex_desc.as_ref().unwrap()));
     graphics.encoder = Some(graphics.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None }));
@@ -189,11 +191,12 @@ async fn setup(vert_dat : Vec::<Vertex>, bgcolour : wgpu::Color) -> Graphics<'st
     
     {
         let texture_view = graphics.texture.as_ref().unwrap().create_view(&Default::default());
+        let texture_view_msaa = texture_msaa.create_view(&Default::default());
         let render_pass_desc = wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[wgpu::RenderPassColorAttachment {
-                view: &texture_view,
-                resolve_target: None,
+                view: &texture_view_msaa,
+                resolve_target: Some(&texture_view),
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(bgcolour),
                     store: true,
@@ -282,12 +285,12 @@ fn make_draw_data() -> Vec::<Vertex>{
     
     let l1 = line2tris(v1,v2, 0.05);
     
-    let v1 = Vertex { position: [0.4, 0.8], colour: [1.0, 0.5, 0.0] };
-    let v2 = Vertex { position: [-0.2, 0.8], colour: [0.0, 1.0, 1.0] };
+    let v1 = Vertex { position: [1.0, 0.8], colour: [1.0, 0.5, 0.0] };
+    let v2 = Vertex { position: [-1.0, 0.8], colour: [0.0, 1.0, 1.0] };
     
     let l2 = line2tris(v1,v2, 0.02);
     
-    let v1 = Vertex { position: [0.0, 0.6], colour: [1.0, 0.5, 1.0] };
+    let v1 = Vertex { position: [0.8, 0.6], colour: [1.0, 0.5, 1.0] };
     let v2 = Vertex { position: [-0.5, 0.8], colour: [0.0, 0.2, 0.3] };
     
     let l3 = line2tris(v1,v2, 0.1);
