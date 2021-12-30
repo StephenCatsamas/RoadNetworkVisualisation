@@ -275,8 +275,8 @@ class MainForm ( wx.Frame ):
 
         paramSizer.Add( self.draw_width_label, 0, wx.ALL, 5 )
 
-        self.draw_width = SpinCtrlDoubleAdpt( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, 0, 10, 0.000000, 0.01 )
-        self.draw_width.SetDigits( 2 )
+        self.draw_width = SpinCtrlDoubleAdpt( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 128,-1 ), wx.SP_ARROW_KEYS, 0, 10, 0.000000, 0.001 )
+        self.draw_width.SetDigits( 3 )
         paramSizer.Add( self.draw_width, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
 
 

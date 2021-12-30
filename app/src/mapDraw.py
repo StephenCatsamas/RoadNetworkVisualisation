@@ -77,15 +77,6 @@ def draw(file, args):
                 if (i % 6000 == 0):
                     print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
                     
-                # if (i % 12000 == 0):
-                    # linecolls.append(LineCollection(seg, linewidths= args.seg_width ,linestyle='solid', colors = colours))
-                    
-                    # seg = np.zeros((0,2,2))
-                    # ln = np.zeros((2,2))
-                    # colours = np.zeros((0,3))
-            
-           
-            # linecolls.append(LineCollection(seg, linewidths= args.seg_width ,linestyle='solid', colors = colours))
     
         # ax.set_aspect(1/(math.cos(math.radians(args.Nf))))
             
