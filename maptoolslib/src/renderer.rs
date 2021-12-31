@@ -379,7 +379,7 @@ fn line2tris(line : &Line) -> [Vertex; 6]{
     return [v1,v3,v2,v3,v4,v2];
 }
 
-pub fn make_draw_data(lines : Vec<Line>) -> Vec::<Vertex>{
+pub fn make_draw_data(lines : &Vec<Line>) -> Vec::<Vertex>{
     
     let mut vertex_data = Vec::<Vertex>::new();
     

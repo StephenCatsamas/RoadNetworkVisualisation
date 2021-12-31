@@ -1,13 +1,15 @@
 from src import ui,maptoolslib
 
-
-
-if __name__ == "__main__":
+def run():
     print('Initiating road network visualisation')
     print(maptoolslib.__doc__)
+    print(maptoolslib.rust_test(24))
     
 
 
-    ui.begin()
+    # ui.begin()
+
+if __name__ == "__main__":
+    run()
     
 

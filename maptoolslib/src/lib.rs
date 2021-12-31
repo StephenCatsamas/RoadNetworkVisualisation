@@ -8,22 +8,15 @@ use std::collections::HashMap;
 
 py_module_initializer!(maptoolslib, |py, m| {
     m.add(py, "__doc__", concat!("rust lib built at: ", include!(concat!(env!("OUT_DIR"), "/timestamp.txt"))))?;
-    m.add(py, "rust_test", py_fn!(py, rust_test(a: PyObject)))?;
+    m.add(py, "rust_test", py_fn!(py, rust_test(a: i32)))?;
     m.add(py, "drawlines", py_fn!(py, drawlines(line: PyObject, view : PyObject, fp: &str)))?;
     Ok(())
 });
 
 
-fn rust_test(py: Python, a: PyObject) -> PyResult<u64> {
+fn rust_test(py: Python, a: i32) -> PyResult<u64> {
     println!("{}", a);
-    
-    let to = a.getattr(py, "to").unwrap();
-    let tot = to.extract::<(f32,f32)>(py).unwrap();
-    // let tp : (f32, f32) = tot.extract::<>(py).unwrap();
-    print_type_of(&tot);
-    println!("{}", tot.0);
-    println!("{}", tot.1);
-    
+
     Ok(7)
 }
 
@@ -99,11 +92,11 @@ fn linesfrompy(py: Python, lines: PyObject) -> Vec<Line> {
 
 const TILESIZE:f32 = 2.0;
 
-fn totile_pos(p : [f32;2]) -> ([u32;2],[f32;2]){
+fn totile_pos(p : [f32;2]) -> ([i32;2],[f32;2]){
     let [x,y] = p;
     
-    let xtile = (x + (TILESIZE / 2.0) % TILESIZE) as u32;
-    let ytile = (y + (TILESIZE / 2.0) % TILESIZE) as u32;
+    let xtile = (x + (TILESIZE / 2.0) % TILESIZE) as i32;
+    let ytile = (y + (TILESIZE / 2.0) % TILESIZE) as i32;
     
     let xpos = x - TILESIZE*(xtile as f32);
     let ypos = y - TILESIZE*(ytile as f32);
@@ -134,14 +127,14 @@ fn insegment(p : [f32;2], line : &Line) -> bool{
     return (xi <= x && x <= xf) && (yi <= y && y <= yf);
 }
 
-fn gettiles(line : &Line) -> Vec::<[u32;2]>{  
+fn gettiles(line : &Line) -> Vec::<[i32;2]>{  
     let to = line.to;   
     let [xo,yo] = to;
     let theta = lineangle(&line);
     let (s_tile,s_pos) = totile_pos(to);
     let [x,y] = s_pos;
 
-    let mut tiles = Vec::<[u32;2]>::new();
+    let mut tiles = Vec::<[i32;2]>::new();
     tiles.push(s_tile);
 
     let dx = 0.5*TILESIZE - x;
@@ -173,8 +166,8 @@ fn gettiles(line : &Line) -> Vec::<[u32;2]>{
     return tiles;
 }
 
-fn splitlines(lines : Vec<Line>) ->  HashMap<[u32;2],Vec<Line>>{
-    let mut tiles =  HashMap::<[u32;2],Vec<Line>>::new();
+fn splitlines(lines : Vec<Line>) ->  HashMap<[i32;2],Vec<Line>>{
+    let mut tiles =  HashMap::<[i32;2],Vec<Line>>::new();
     
     for line in lines{
         let linetiles = gettiles(&line);
@@ -201,14 +194,18 @@ fn drawlines(py: Python, lines: PyObject, view : PyObject, fp: &str) -> PyResult
 
     let lines = toscreenspace(lines, view);
     
-    let line_sets = splitlines(lines);
+    let tilehash = splitlines(lines);
     
-    // let vert_dat = renderer::make_draw_data(lines);
-
-    // let graphics = pollster::block_on(renderer::setup(vert_dat, bgcolour));
-
-    // pollster::block_on(renderer::run(graphics, fp));
+    for (tile,lines) in &tilehash{
     
+        let vert_dat = renderer::make_draw_data(lines);
+
+        let graphics = pollster::block_on(renderer::setup(vert_dat, bgcolour));
+
+        let fptile = format!("{:?}.png", tile);
+
+        pollster::block_on(renderer::run(graphics, &fptile));
+    }
     return Ok(1);
     
 }
