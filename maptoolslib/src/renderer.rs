@@ -379,11 +379,38 @@ fn line2tris(line : &Line) -> [Vertex; 6]{
     return [v1,v3,v2,v3,v4,v2];
 }
 
-pub fn make_draw_data(lines : &Vec<Line>) -> Vec::<Vertex>{
+fn ltorenderspace(line: &Line, tile: &[i32;2]) -> Line{
+    let [tx,ty] = line.to;
+    let [fx,fy] = line.from;
+    let [xtilei,ytilei] = *tile;
+    let xtile = xtilei as f32;
+    let ytile = ytilei as f32;
+
+    let t = [tx - xtile, ty - ytile];
+    let f = [fx - xtile, fy - ytile];
+    return Line{
+        to : t,
+        from : f,
+        colour : line.colour,
+        width : line.width,
+    };
+}
+
+fn torenderspace(lines: &Vec<Line>, tile: &[i32;2]) -> Vec<Line> {
+    let slines: Vec<Line> = lines
+        .iter()
+        .map(|line_ref| ltorenderspace(line_ref, tile))
+        .collect();
+    return slines;
+}
+
+pub fn make_draw_data(lines : &Vec<Line>, tile : &[i32;2]) -> Vec::<Vertex>{
     
     let mut vertex_data = Vec::<Vertex>::new();
     
-    let liter = lines.iter();
+    let rednderlines = torenderspace(lines, tile);
+
+    let liter = rednderlines.iter();
     
     for line in liter {
         let tris = line2tris(&line);

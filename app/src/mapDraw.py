@@ -78,7 +78,7 @@ def draw(file, args):
                     print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
                     
         print(flat,flon)
-        view = View((flat,flat-args.stp,flon+args.stp,flon),1000)
+        view = View((flat,flat-(args.stp/args.blk),flon+(args.stp/args.blk),flon),2000)
     
         
         maptoolslib.drawlines(lines,view,fout)

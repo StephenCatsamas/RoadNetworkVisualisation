@@ -14,11 +14,19 @@
               }
         },
         {
+            "name": "LLDB: Attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "C:/Program Files/Python39/python",
+            "pid": "${command:pickProcess}",
+        },
+        {
             "name": "Debug",
             "type": "lldb",
             "request": "launch",
             "program": "C:/Program Files/Python39/python",
             "args": ["${workspaceFolder}/app/debug.py"],
+            "cwd": "${workspaceFolder}/app",
         },
     ]
 }
