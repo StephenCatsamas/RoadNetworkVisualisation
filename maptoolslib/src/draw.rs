@@ -1,8 +1,9 @@
-
+use std::f32::consts::PI;
 use std::collections::HashMap;
 use crate::renderer::{Line,make_draw_data,setup,run};
 
 const TILESIZE: f32 = 2.0;
+const TEXSIZE: f32 = 512 as f32;
 
 pub fn drawlineset(lines : Vec<Line>, view : View){
     let bgcolour = [0.1, 0.1, 0.1, 1.0];
@@ -48,12 +49,10 @@ fn toscreenspace(lines: Vec<Line>, view: View) -> Vec<Line> {
 }
 
 fn pix2scrn(pix: [f32; 2]) -> [f32; 2] {
-    let tex_size = 512 as f32;
-
     let [x, y] = pix;
 
-    let xs = 2.0 * (x / tex_size) - 1.0;
-    let ys = 2.0 * (-y / tex_size) + 1.0;
+    let xs = TILESIZE * (x / TEXSIZE);
+    let ys = TILESIZE * (-y / TEXSIZE);
 
     return [xs, ys];
 }
@@ -150,12 +149,23 @@ fn insegment(p: [f32; 2], line: &Line) -> bool {
     return (xi <= x && x <= xf) && (yi <= y && y <= yf);
 }
 
+fn fmod(z : f32, m : f32) -> f32{
+    (z%m + m)%m
+}
+
+fn quadrant(theta : f32) -> [f32;2]{
+    return [(fmod(theta-0.5*PI,2.0*PI)-PI).signum(),
+            theta.signum()]
+}
+
 fn gettiles(line: &Line) -> Vec<[i32; 2]> {
     let to = line.to;
     let [xo, yo] = to;
     let theta = lineangle(&line);
     let (s_tile, s_pos) = totile_pos(to);
     let [x, y] = s_pos;
+
+    let [xdir,ydir] = quadrant(theta);
 
     let mut tiles = Vec::<[i32; 2]>::new();
     tiles.push(s_tile);
@@ -167,8 +177,8 @@ fn gettiles(line: &Line) -> Vec<[i32; 2]> {
     let mut ym = yo + xintdy;
 
     while insegment([xm, ym], line) {
-        xm += TILESIZE;
-        ym += TILESIZE * theta.tan();
+        xm += xdir*TILESIZE;
+        ym += ydir*TILESIZE * theta.tan();
         let (tile, _pos) = totile_pos([xm + 0.5 * TILESIZE, ym]);
         tiles.push(tile);
     }
@@ -182,8 +192,8 @@ fn gettiles(line: &Line) -> Vec<[i32; 2]> {
     while insegment([xm, ym], line) {
         let (tile, _pos) = totile_pos([xm, ym + 0.5 * TILESIZE]);
         tiles.push(tile);
-        xm += TILESIZE / theta.tan();
-        ym += TILESIZE;
+        xm += xdir*TILESIZE / theta.tan();
+        ym += ydir*TILESIZE;
     }
 
     return tiles;

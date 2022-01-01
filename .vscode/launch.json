@@ -28,5 +28,12 @@
             "args": ["${workspaceFolder}/app/debug.py"],
             "cwd": "${workspaceFolder}/app",
         },
+        {
+            "name": "Rust Debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/maptoolslib/target/debug/maptools",
+            "cwd": "${workspaceFolder}",
+        },
     ]
 }

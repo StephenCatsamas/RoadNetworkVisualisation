@@ -9,7 +9,7 @@ fn main()  {
     let mut lines = Vec::<Line>::new();
 
     let l1 = Line{
-        to : [-1.0,1.0],
+        to : [1.0,1.0],
         from : [0.0,0.0],
         colour : [1.0,1.0,1.0],
         width : 0.1,
