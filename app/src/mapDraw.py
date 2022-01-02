@@ -43,49 +43,42 @@ def draw(file, args):
         flat = int(file[Cia+1:Cib])/args.blk
         flon = int(file[Cib+1:Cic])/args.blk
         
-        linecolls = list()
 
-        with open(fcur, 'r', newline='') as csvfile:
-            reader = csv.reader(csvfile, delimiter=';',
-                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        # with open(fcur, 'r', newline='') as csvfile:
+        #     reader = csv.reader(csvfile, delimiter=';',
+        #                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-            n_rows = sum(1 for row in reader)       
+        #     n_rows = sum(1 for row in reader)       
             
-        with open(fcur, 'r', newline='') as csvfile:
-            reader = csv.reader(csvfile, delimiter=';',
-                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        # with open(fcur, 'r', newline='') as csvfile:
+        #     reader = csv.reader(csvfile, delimiter=';',
+        #                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-            # seg = np.zeros((0,2,2))
-            # ln = np.zeros((2,2))
-            # colours = np.zeros((0,3))
+        #     lines = []
 
-            lines = []
+        #     i = 0
 
-            i = 0
-
-            for row in reader:
-                i += 1
-                lon = eval(row[0])
-                lat = eval(row[1])
-                col = eval(row[2])
+        #     for row in reader:
+        #         i += 1
+        #         lon = eval(row[0])
+        #         lat = eval(row[1])
+        #         col = eval(row[2])
                 
                
 
-                p1 = (lat[0],lon[0])
-                p2 = (lat[1],lon[1])
+        #         p1 = (lat[0],lon[0])
+        #         p2 = (lat[1],lon[1])
                 
-                l = Line(p1,p2,args.seg_width, col)
+        #         l = Line(p1,p2,args.seg_width, col)
                 
-                lines.append(l)
+        #         lines.append(l)
                 
-                if (i % 6000 == 0):
-                    print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
+        #         if (i % 6000 == 0):
+        #             print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
 
-
-        print(flat,flon)
         view = View((flat,flat-(args.stp/args.blk),flon+(args.stp/args.blk),flon),args.res)
         tik = time.perf_counter()
-        maptoolslib.drawlines(lines,view,fout)
+        maptoolslib.drawfile(fcur,view,fout)
         tok = time.perf_counter()
         rust_draw_concat(view,fout,fname)
         tuk = time.perf_counter()

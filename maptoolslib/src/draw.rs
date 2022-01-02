@@ -287,7 +287,7 @@ fn complete_rect(tiles: &mut HashMap<[i32; 2], Vec<Line>>) {
     for y in ysize..-1{
         let tile = [x,y];
         match tiles.get_mut(&tile) {
-            Some(v) => {},
+            Some(_v) => {},
             None => {
                 let v = Vec::<Line>::new();
                 tiles.insert(tile, v);
