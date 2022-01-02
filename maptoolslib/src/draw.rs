@@ -4,6 +4,7 @@ use crate::renderer::{Line,make_draw_data,setup,run};
 
 const TILESIZE: f32 = 2.0;
 const TEXSIZE: f32 = 512 as f32;
+const F32MRG : f32 = 1E-6;
 
 pub fn drawlineset(lines : Vec<Line>, view : View){
     let bgcolour = [0.1, 0.1, 0.1, 1.0];
@@ -148,7 +149,7 @@ fn insegment(p: [f32; 2], line: &Line) -> bool {
     let [xi, xf] = if x1 > x2 { [x2, x1] } else { [x1, x2] };
     let [yi, yf] = if y1 > y2 { [y2, y1] } else { [y1, y2] };
 
-    return (xi <= x && x <= xf) && (yi <= y && y <= yf);
+    return (xi - F32MRG  <= x && x <= xf + F32MRG ) && (yi - F32MRG <= y && y <= yf + F32MRG);
 }
 
 fn fmod(z : f32, m : f32) -> f32{
@@ -168,7 +169,7 @@ enum InterceptType {
 }
 
 fn near1(z : f32) -> bool{
-    if (z-1.0).abs() < 1.0E-4 {true} else {false}
+    if (z-1.0).abs() < F32MRG {true} else {false}
 }
 
 fn find_intr_type([x,y] : [f32;2]) -> InterceptType {

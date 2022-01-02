@@ -10,13 +10,13 @@ fn main()  {
 
     let l1 = Line{
         to : [1.0,1.0],
-        from : [0.0,0.0],
+        from : [1.0,-1.0],
         colour : [1.0,1.0,1.0],
         width : 0.1,
     };
     lines.push(l1);
 
-    let view = View { bounds: [1.0,-1.0,1.0,-1.0], res: 256.0 };
+    let view = View { bounds: [1.0,-1.0,1.0,-1.0], res: 768.0 };
 
     draw::drawlineset(lines, view);
 }
