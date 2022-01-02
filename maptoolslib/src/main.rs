@@ -18,5 +18,5 @@ fn main()  {
 
     let view = View { bounds: [1.0,-1.0,1.0,-1.0], res: 768.0 };
 
-    draw::drawlineset(lines, view);
+    draw::drawlineset(lines, view, "rust_test\\");
 }

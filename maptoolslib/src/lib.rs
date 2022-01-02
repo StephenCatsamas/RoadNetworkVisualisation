@@ -116,7 +116,7 @@ fn drawlines(py: Python, lines: PyObject, view: PyObject, fp: &str) -> PyResult<
     let view = View::frompy(py, view);
     let lines = linesfrompy(py, lines);
 
-    draw::drawlineset(lines, view);
+    draw::drawlineset(lines, view, fp);
 
     return Ok(1);
 }

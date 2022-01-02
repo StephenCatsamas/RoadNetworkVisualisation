@@ -1,8 +1,6 @@
 import os
-import math
+import pyvips
 import csv
-import numpy as np
-import time
 
 from . import maptoolslib
 
@@ -30,7 +28,10 @@ def compatify(p,view):
 def draw(file, args):
         
         fcur = args.mapDrawInPath+'\\'+file
-        fout = args.mapDrawOutPath+'\\'+file[:-4] + '.png'
+        fout = args.mapDrawOutPath+'\\'+file[:-4] + '\\'
+        # make output directory
+        if not os.path.exists(fout):
+            os.makedirs(fout)
 
         Cia = file.find("_")
         Cib = file.find("_", Cia+1)
@@ -78,9 +79,45 @@ def draw(file, args):
                     print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
                     
         print(flat,flon)
-        view = View((flat,flat-(args.stp/args.blk),flon+(args.stp/args.blk),flon),2000)
+        view = View((flat,flat-(args.stp/args.blk),flon+(args.stp/args.blk),flon),args.res)
     
-        
         maptoolslib.drawlines(lines,view,fout)
+        rust_draw_concat(view,fout)
 
+def rust_draw_concat(view,fout):
+    print("Joining")
+    
+    for root,dirs,files in os.walk(fout):
+        
+        files.sort(key = row_major)
+        print(files)
+        nx = get_xtiles(files)
 
+    images = [pyvips.Image.new_from_file(fout+file) for file in files]
+    
+    outimg = pyvips.Image.arrayjoin(images, across = nx)
+    
+    outimg.write_to_file(fout+'.png')
+
+    for root,dirs,files in os.walk(fout):
+        for file in files:
+            print(root+dirs+file)
+    print(fout)
+
+def get_xtiles(files):
+    ords = [get_tile(file) for file in files]
+    xords = [x for x,y in ords]
+    return max(xords)-min(xords)+1
+
+def get_tile(file): 
+    Cia = file.find("[")
+    Cib = file.find(",", Cia+1)
+    Cic = file.find("]", Cib)
+    
+    xtile = float(file[Cia+1:Cib])
+    ytile = float(file[Cib+1:Cic])
+    return(xtile,ytile)
+
+def row_major(file):
+    x,y = get_tile(file)
+    return (-y,x)

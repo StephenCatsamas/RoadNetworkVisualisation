@@ -6,20 +6,20 @@ const TILESIZE: f32 = 2.0;
 const TEXSIZE: f32 = 512 as f32;
 const F32MRG : f32 = 1E-6;
 
-pub fn drawlineset(lines : Vec<Line>, view : View){
+pub fn drawlineset(lines : Vec<Line>, view : View, fp : &str){
     let bgcolour = [0.1, 0.1, 0.1, 1.0];
 
-    let lines = toscreenspace(lines, view);
+    let lines = toscreenspace(lines, &view);
 
-    let tilehash = splitlines(lines);
+    let tilehash = splitlines(lines, &view);
 
     for (tile, lines) in &tilehash {
         let vert_dat = make_draw_data(lines, &tile);
 
         let graphics = pollster::block_on(setup(vert_dat, bgcolour));
 
-        let fptile = format!("{:?}.png", tile);
-
+        let fptile = format!("{}{:?}.png", fp, tile);
+        dbg!(&fptile);
         pollster::block_on(run(graphics, &fptile));
     }
 }
@@ -43,7 +43,7 @@ fn project(line: &Line, view: &View) -> Line {
     };
 }
 
-fn toscreenspace(lines: Vec<Line>, view: View) -> Vec<Line> {
+fn toscreenspace(lines: Vec<Line>, view: &View) -> Vec<Line> {
     let slines: Vec<Line> = lines
         .iter()
         .map(|line_ref| project(line_ref, &view))
@@ -254,12 +254,13 @@ fn gettiles(line: &Line) -> Vec<[i32; 2]> {
     return tiles;
 }
 
-fn splitlines(lines: Vec<Line>) -> HashMap<[i32; 2], Vec<Line>> {
+fn splitlines(lines: Vec<Line>, view : &View) -> HashMap<[i32; 2], Vec<Line>> {
     let mut tiles = HashMap::<[i32; 2], Vec<Line>>::new();
 
     for line in lines {
         let linetiles = gettiles(&line);
         for tile in linetiles {
+            if !in_view(tile, &view) {continue}
             match tiles.get_mut(&tile) {
                 Some(v) => v.push(line.clone()),
                 None => {
@@ -271,4 +272,18 @@ fn splitlines(lines: Vec<Line>) -> HashMap<[i32; 2], Vec<Line>> {
         }
     }
     return tiles;
+}
+
+#[allow(non_snake_case)]
+fn in_view(tile : [i32;2], view : &View) -> bool{
+    let [Nv,Sv,Ev,Wv] = view.bounds;
+    
+    let (NWtile, _pos) = totile_pos(pix2scrn(deg2pix([Nv, Wv],&view)));
+    let (SEtile, _pos) = totile_pos(pix2scrn(deg2pix([Sv, Ev],&view)));
+    // dbg!(&NWtile);
+    // dbg!(&SEtile);
+    // dbg!(&tile);
+    // panic!();
+    return (NWtile[0] <= tile[0] && tile[0] <= SEtile[0])//westness 
+    && (SEtile[1] <= tile[1] && tile[1] < NWtile[1])//northness//take note of inequality strictness
 }
