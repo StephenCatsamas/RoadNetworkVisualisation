@@ -16,7 +16,7 @@ fn main()  {
     };
     lines.push(l1);
 
-    let view = View { bounds: [1.0,-1.0,1.0,-1.0], res: 1000.0 };
+    let view = View { bounds: [1.0,-1.0,1.0,-1.0], res: 256.0 };
 
     draw::drawlineset(lines, view);
 }

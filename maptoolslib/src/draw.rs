@@ -29,8 +29,10 @@ fn project(line: &Line, view: &View) -> Line {
     let colour = line.colour;
     let width = line.width;
 
-    let to = pix2scrn(deg2pix(to, view));
-    let from = pix2scrn(deg2pix(from, view));
+    let tpix = deg2pix(to, view);
+    let to = pix2scrn(tpix);
+    let fpix = deg2pix(from, view);
+    let from = pix2scrn(fpix);
 
     return Line {
         to,
@@ -119,11 +121,11 @@ pub struct View {
 fn totile_pos(p: [f32; 2]) -> ([i32; 2], [f32; 2]) {
     let [x, y] = p;
 
-    let xtile = ((x + (TILESIZE / 2.0)) / TILESIZE).floor() as i32;
-    let ytile =((y + (TILESIZE / 2.0)) / TILESIZE).floor() as i32;
+    let xtile = (x / TILESIZE).floor() as i32;
+    let ytile = (y / TILESIZE).floor() as i32;
     
-    let xpos = x - TILESIZE * (xtile as f32);
-    let ypos = y - TILESIZE * (ytile as f32);
+    let xpos = fmod(x,TILESIZE);
+    let ypos = fmod(y, TILESIZE);
 
     return ([xtile, ytile], [xpos, ypos]);
 }
@@ -158,6 +160,28 @@ fn quadrant(theta : f32) -> [f32;2]{
             theta.signum()]
 }
 
+enum InterceptType {
+    X,
+    Y,
+    XY,
+    None,
+}
+
+fn near1(z : f32) -> bool{
+    if (z-1.0).abs() < 1.0E-4 {true} else {false}
+}
+
+fn find_intr_type([x,y] : [f32;2]) -> InterceptType {
+     let [rx,ry] = [fmod(x+1.0, TILESIZE), fmod(y+1.0, TILESIZE)];
+
+    if near1(rx) && near1(ry) {return InterceptType::XY};
+    if near1(rx) {return InterceptType::Y};
+    if near1(ry) {return InterceptType::X};
+    return InterceptType::None;
+
+}
+
+//may return same tile more than once
 fn gettiles(line: &Line) -> Vec<[i32; 2]> {
     let to = line.to;
     let [xo, yo] = to;
@@ -170,32 +194,62 @@ fn gettiles(line: &Line) -> Vec<[i32; 2]> {
     let mut tiles = Vec::<[i32; 2]>::new();
     tiles.push(s_tile);
 
-    let dx = 0.5 * TILESIZE - x;
-    let xintdy = dx * theta.tan();
-    //march for x intercepts
-    let mut xm = xo + dx;
-    let mut ym = yo + xintdy;
 
-    while insegment([xm, ym], line) {
-        xm += xdir*TILESIZE;
-        ym += ydir*TILESIZE * theta.tan();
-        let (tile, _pos) = totile_pos([xm + 0.5 * TILESIZE, ym]);
-        tiles.push(tile);
+    //find first intercepts along the segment
+    let xintdy = if ydir == 1.0 {TILESIZE - y} else {-y};
+    let xintdx = xintdy / theta.tan();
+
+    let yintdx = if xdir == 1.0 {TILESIZE - x} else {-x};
+    let yintdy = yintdx * theta.tan();
+
+    let mut xint_xn = xo + xintdx;
+    let mut xint_yn = yo + xintdy;
+
+    let mut yint_xn = xo + yintdx;
+    let mut yint_yn = yo + yintdy;
+
+    //march to first intercepts
+    let mut xm = if (xintdy-yo).abs() < (yintdy-yo).abs() {xint_xn} else {yint_xn};
+    let mut ym = if (xintdy-yo).abs() < (yintdy-yo).abs() {xint_yn} else {yint_yn};
+
+    while insegment([xm,ym], line){
+        
+        match find_intr_type([xm,ym]){
+            InterceptType::X => {
+                let (tile, _pos) = totile_pos([xm , ym + 0.5*TILESIZE*ydir]);
+                tiles.push(tile);
+
+                xint_xn = xm + xdir*TILESIZE / theta.tan();
+                xint_yn = ym + ydir*TILESIZE;
+            },
+            InterceptType::Y => {
+                let (tile, _pos) = totile_pos([xm + 0.5*TILESIZE*xdir, ym ]);
+                tiles.push(tile);
+
+                yint_xn = xm + xdir*TILESIZE;
+                yint_yn = ym + ydir*TILESIZE * theta.tan();
+            },
+            InterceptType::XY => {//on corners we need to do every tile except the one we came from
+                for [dx,dy] in [[1.0,1.0],[1.0,-1.0],[-1.0,1.0]]{//only when dy,dx == 1 are we going in the direction we came from
+                    let (tile, _pos) = totile_pos([xm + 0.5*TILESIZE*xdir*dx, ym + 0.5*TILESIZE*ydir*dy]);
+                    tiles.push(tile);
+                }
+            
+                xint_xn = xm + xdir*TILESIZE;
+                xint_yn = ym + ydir*TILESIZE*theta.tan();
+                yint_xn = xm + xdir*TILESIZE/theta.tan();
+                yint_yn = ym + ydir*TILESIZE;
+            },
+            InterceptType::None => {
+                panic!();
+            },
+        }
+
+        //do marching
+        xm = if (xint_yn-yo).abs() < (yint_yn-yo).abs() {xint_xn} else {yint_xn};
+        ym = if (xint_yn-yo).abs() < (yint_yn-yo).abs() {xint_yn} else {yint_yn};
+
     }
-
-    let dy = 0.5 * TILESIZE - y;
-    let yintdx = dy / theta.tan();
-    //march for y intercepts
-    let mut xm = xo + yintdx;
-    let mut ym = yo + dy;
-
-    while insegment([xm, ym], line) {
-        let (tile, _pos) = totile_pos([xm, ym + 0.5 * TILESIZE]);
-        tiles.push(tile);
-        xm += xdir*TILESIZE / theta.tan();
-        ym += ydir*TILESIZE;
-    }
-
     return tiles;
 }
 

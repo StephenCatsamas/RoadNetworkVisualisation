@@ -8,6 +8,9 @@ pub struct Vertex {
     colour: [f32; 3],
 }
 
+const TILESIZE: f32 = 2.0;
+const TEXSIZE: f32 = 512 as f32;
+
 
 pub struct Graphics<'a>{
     device : wgpu::Device,   
@@ -173,7 +176,7 @@ pub async fn setup(vert_dat : Vec::<Vertex>, bgcolour : [f32;4]) -> Graphics<'st
         device : device,
         queue : queue,
         vbuff_layout : vertex_buffer_layout,
-        tex_size : 512, //must be a multiple of 64
+        tex_size : (TEXSIZE as u32), //must be a multiple of 64
         tex_desc : None,
         texture : None,
         render_pipeline : None,
@@ -379,6 +382,10 @@ fn line2tris(line : &Line) -> [Vertex; 6]{
     return [v1,v3,v2,v3,v4,v2];
 }
 
+fn fmod(z : f32, m : f32) -> f32{
+    (z%m + m)%m
+}
+
 fn ltorenderspace(line: &Line, tile: &[i32;2]) -> Line{
     let [tx,ty] = line.to;
     let [fx,fy] = line.from;
@@ -386,8 +393,8 @@ fn ltorenderspace(line: &Line, tile: &[i32;2]) -> Line{
     let xtile = xtilei as f32;
     let ytile = ytilei as f32;
 
-    let t = [tx - xtile, ty - ytile];
-    let f = [fx - xtile, fy - ytile];
+    let t = [tx - (xtile+ 0.5)*TILESIZE, ty - (ytile+0.5)*TILESIZE ];
+    let f = [fx - (xtile+ 0.5)*TILESIZE, fy - (ytile+0.5)*TILESIZE ];
     return Line{
         to : t,
         from : f,
