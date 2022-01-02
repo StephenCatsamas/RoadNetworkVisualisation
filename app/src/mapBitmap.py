@@ -15,7 +15,6 @@ def row_major(file):
 def grey(file, args):
     fcur = args.mapGreyInPath+'\\'+file
     fout = args.mapGreyOutPath+'\\'+file
-    fgry = args.mapGrayMaskPath + '\\' + 'Grey.png'
        
     print("Greying:", str(os.getpid()).zfill(6), "||", fcur)
     
@@ -26,9 +25,7 @@ def grey(file, args):
     im_grey.write_to_file(fout)
 
 def concat(args):
-    rowlist = list()
 
-    ny = len(range(args.S,args.N,args.stp))
     nx = len(range(args.W,args.E,args.stp))
 
     print("Concatinating")

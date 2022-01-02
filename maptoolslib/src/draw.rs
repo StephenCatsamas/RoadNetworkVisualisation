@@ -2,8 +2,8 @@ use std::f32::consts::PI;
 use std::collections::HashMap;
 use crate::renderer::{Line,make_draw_data,setup,run};
 
-const TILESIZE: f32 = 2.0;
-const TEXSIZE: f32 = 512 as f32;
+pub const TILESIZE: f32 = 2.0;
+pub const TEXSIZE: f32 = 512 as f32;
 const F32MRG : f32 = 1E-6;
 
 pub fn drawlineset(lines : Vec<Line>, view : View, fp : &str){
@@ -18,7 +18,7 @@ pub fn drawlineset(lines : Vec<Line>, view : View, fp : &str){
 
         let graphics = pollster::block_on(setup(vert_dat, bgcolour));
 
-        let fptile = format!("{}{:?}.png", fp, tile);
+        let fptile = format!("{}{:?}.tiff", fp, tile);
         dbg!(&fptile);
         pollster::block_on(run(graphics, &fptile));
     }
@@ -254,6 +254,7 @@ fn gettiles(line: &Line) -> Vec<[i32; 2]> {
     return tiles;
 }
 
+
 fn splitlines(lines: Vec<Line>, view : &View) -> HashMap<[i32; 2], Vec<Line>> {
     let mut tiles = HashMap::<[i32; 2], Vec<Line>>::new();
 
@@ -271,7 +272,30 @@ fn splitlines(lines: Vec<Line>, view : &View) -> HashMap<[i32; 2], Vec<Line>> {
             }
         }
     }
+    complete_rect(&mut tiles);
+
+
     return tiles;
+}
+
+fn complete_rect(tiles: &mut HashMap<[i32; 2], Vec<Line>>) {
+    
+    let xsize = tiles.keys().map(|cords| cords[0]).max().unwrap();
+    let ysize = tiles.keys().map(|cords| cords[1]).min().unwrap();
+
+    for x in 0..xsize{
+    for y in ysize..-1{
+        let tile = [x,y];
+        match tiles.get_mut(&tile) {
+            Some(v) => {},
+            None => {
+                let v = Vec::<Line>::new();
+                tiles.insert(tile, v);
+            }
+        }
+    }
+    }
+
 }
 
 #[allow(non_snake_case)]
@@ -280,10 +304,7 @@ fn in_view(tile : [i32;2], view : &View) -> bool{
     
     let (NWtile, _pos) = totile_pos(pix2scrn(deg2pix([Nv, Wv],&view)));
     let (SEtile, _pos) = totile_pos(pix2scrn(deg2pix([Sv, Ev],&view)));
-    // dbg!(&NWtile);
-    // dbg!(&SEtile);
-    // dbg!(&tile);
-    // panic!();
+
     return (NWtile[0] <= tile[0] && tile[0] <= SEtile[0])//westness 
     && (SEtile[1] <= tile[1] && tile[1] < NWtile[1])//northness//take note of inequality strictness
 }

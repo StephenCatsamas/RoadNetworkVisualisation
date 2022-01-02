@@ -5,6 +5,11 @@ rust:
     cargo build
     @cd ..
 
+rust-release:
+    @cd maptoolslib
+    cargo build --release
+    @cd ..
+
 rustt:
     @cd maptoolslib
     cargo test 
@@ -12,6 +17,9 @@ rustt:
 
 all: rust    
     copy maptoolslib\target\debug\maptoolslib.dll app\src\maptoolslib.pyd
+
+release: rust-release
+    copy maptoolslib\target\release\maptoolslib.dll app\src\maptoolslib.pyd
     
 run: all
     @cd app
@@ -20,6 +28,7 @@ run: all
     
 runr: rust
     @maptoolslib\target\debug\maptools.exe
+
 
 clean:
     cd maptoolslib

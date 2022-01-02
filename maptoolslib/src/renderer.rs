@@ -8,8 +8,7 @@ pub struct Vertex {
     colour: [f32; 3],
 }
 
-const TILESIZE: f32 = 2.0;
-const TEXSIZE: f32 = 512 as f32;
+use crate::draw::{TILESIZE, TEXSIZE};
 
 
 pub struct Graphics<'a>{
@@ -382,9 +381,6 @@ fn line2tris(line : &Line) -> [Vertex; 6]{
     return [v1,v3,v2,v3,v4,v2];
 }
 
-fn fmod(z : f32, m : f32) -> f32{
-    (z%m + m)%m
-}
 
 fn ltorenderspace(line: &Line, tile: &[i32;2]) -> Line{
     let [tx,ty] = line.to;

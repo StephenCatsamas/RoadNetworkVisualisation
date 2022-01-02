@@ -1,6 +1,8 @@
 import os
 import pyvips
 import csv
+import math
+import time
 
 from . import maptoolslib
 
@@ -28,7 +30,8 @@ def compatify(p,view):
 def draw(file, args):
         
         fcur = args.mapDrawInPath+'\\'+file
-        fout = args.mapDrawOutPath+'\\'+file[:-4] + '\\'
+        fname = file[:-4]
+        fout = args.mapDrawOutPath+'\\'+ fname + '\\'
         # make output directory
         if not os.path.exists(fout):
             os.makedirs(fout)
@@ -77,14 +80,21 @@ def draw(file, args):
                 
                 if (i % 6000 == 0):
                     print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
-                    
+
+
         print(flat,flon)
         view = View((flat,flat-(args.stp/args.blk),flon+(args.stp/args.blk),flon),args.res)
-    
+        tik = time.perf_counter()
         maptoolslib.drawlines(lines,view,fout)
-        rust_draw_concat(view,fout)
+        tok = time.perf_counter()
+        rust_draw_concat(view,fout,fname)
+        tuk = time.perf_counter()
+        print("Time to draw: ", tok - tik)
+        print("Time to concat: ", tuk - tok)
+        print("Total: ", tuk - tik)
 
-def rust_draw_concat(view,fout):
+
+def rust_draw_concat(view,fout,fname):
     print("Joining")
     
     for root,dirs,files in os.walk(fout):
@@ -96,13 +106,43 @@ def rust_draw_concat(view,fout):
     images = [pyvips.Image.new_from_file(fout+file) for file in files]
     
     outimg = pyvips.Image.arrayjoin(images, across = nx)
-    
-    outimg.write_to_file(fout+'.png')
+    #crop image
+    (N,S,E,W) = view.bounds
+    (width,height) = deg2pix((S,E),view)
+    outimg = outimg.crop(0,0,width,height)
+    #save image
+    outimg.write_to_file(fout+'/../'+fname+'.tiff')
 
     for root,dirs,files in os.walk(fout):
         for file in files:
-            print(root+dirs+file)
-    print(fout)
+            os.remove(root+file)
+    os.rmdir(fout)
+
+def deg2pix(deg, view):
+    (lat, lon) = deg
+    (slat, _elat, _elon, slon) = view.bounds
+    zl = view.res
+
+    y = math.degrees(secint(lat, slat)) * zl
+
+    x = (lon - slon) * zl
+
+    return (x, y)
+
+def sectan(z):
+    v = (1/math.cos(z)) + math.tan(z)
+    # if v < 0:
+        # raise ValueError
+    return v
+
+#only for a,b in (-pi/2 to pi/2)
+def secint(a,b):
+    a = math.radians(a)
+    b = math.radians(b)
+    up = sectan(b)
+    down = sectan(a)
+    return (math.log(up) - math.log(down))
+
 
 def get_xtiles(files):
     ords = [get_tile(file) for file in files]
@@ -121,3 +161,4 @@ def get_tile(file):
 def row_major(file):
     x,y = get_tile(file)
     return (-y,x)
+
