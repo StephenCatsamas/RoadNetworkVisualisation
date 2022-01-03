@@ -2,8 +2,6 @@
 extern crate cpython;
 
 use cpython::{ObjectProtocol, PyObject, PyResult, Python};
-use std::fs::File;
-use std::str::FromStr;
 
 mod renderer;
 mod draw;
@@ -29,7 +27,7 @@ py_module_initializer!(maptoolslib, |py, m| {
     m.add(
         py,
         "drawfile",
-        py_fn!(py, drawfile(file: &str, view: PyObject, fp: &str)),
+        py_fn!(py, drawfile(file: &str, view: PyObject, fp: &str, width : f32)),
     )?;
     Ok(())
 });
@@ -114,45 +112,15 @@ fn linesfrompy(py: Python, lines: PyObject) -> Vec<Line> {
 }
 
 
-//implement from string for line to read lines into line array
-impl FromStr for Line {
-    type Err = ParseIntError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let coords: Vec<&str> = s.trim_matches(|p| p == '(' || p == ')' )
-                                 .split(',')
-                                 .collect();
 
-        let x_fromstr = coords[0].parse::<i32>()?;
-        let y_fromstr = coords[1].parse::<i32>()?;
 
-        Ok(Point { x: x_fromstr, y: y_fromstr })
-    }
-}
-//do not use csv
-fn linesfromfile(fp : &str) -> Vec<Line>{
-    let file = File::open(fp).unwrap();
-    let mut rdr = csv::ReaderBuilder::new()
-                    .delimiter(b';')
-                    .from_reader(file);
-    for result in rdr.records() {
-        let record = result.unwrap();
-        let tor = record.range(0).unwrap();
 
-        let tostr = &record.as_slice()[tor];
-        let to = tostr.parse::<[f32;2]>();
-
-        panic!();
-    }
-
-    return Vec::<Line>::new();
-}
-
-fn drawfile(py: Python, file : &str, view: PyObject, fp: &str) -> PyResult<u64> {
+fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> PyResult<u64> {
     
 
     let view = View::frompy(py, view);
-    let lines = linesfromfile(file);
+    let lines = draw::linesfromfile(file, width);
 
     draw::drawlineset(lines, view, fp);
 

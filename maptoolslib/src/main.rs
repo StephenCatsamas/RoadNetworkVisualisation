@@ -6,17 +6,8 @@ use draw::View;
 
 fn main()  {
 
-    let mut lines = Vec::<Line>::new();
-
-    let l1 = Line{
-        to : [1.0,1.0],
-        from : [1.0,-1.0],
-        colour : [1.0,1.0,1.0],
-        width : 0.1,
-    };
-    lines.push(l1);
-
-    let view = View { bounds: [1.0,-1.0,1.0,-1.0], res: 768.0 };
+    let view = View { bounds: [-37.608,-37.94,145.173,144.72], res: 768.0 };
+    let lines = draw::linesfromfile("seg.csv", 0.05);
 
     draw::drawlineset(lines, view, "rust_test\\");
 }

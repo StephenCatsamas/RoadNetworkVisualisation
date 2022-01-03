@@ -93,7 +93,10 @@ def seg_plot(args,lonlst,latlst,width, writer):
             
             col = colour(args,minilon,minilat,width)
 
-            writer.writerow([tuple(minilon),tuple(minilat),col])
+            to = (minilat[0],minilon[0])
+            fm = (minilat[1],minilon[1])
+
+            writer.writerow([to,fm,col])
 
 
 

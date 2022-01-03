@@ -1,10 +1,14 @@
 use std::f32::consts::PI;
 use std::collections::HashMap;
 use crate::renderer::{Line,make_draw_data,setup,run};
+use std::fs::File;
+use std::io::{self, BufRead};
+
 
 pub const TILESIZE: f32 = 2.0;
 pub const TEXSIZE: f32 = 512 as f32;
 const F32MRG : f32 = 1E-6;
+
 
 pub fn drawlineset(lines : Vec<Line>, view : View, fp : &str){
     let bgcolour = [0.1, 0.1, 0.1, 1.0];
@@ -22,6 +26,64 @@ pub fn drawlineset(lines : Vec<Line>, view : View, fp : &str){
         dbg!(&fptile);
         pollster::block_on(run(graphics, &fptile));
     }
+}
+
+pub fn linesfromfile(fp : &str, width : f32) -> Vec<Line>{
+    let mut lvec = Vec::<Line>::new();
+
+    let mut to : Option<[f32;2]> = None;
+    let mut from : Option<[f32;2]> = None;
+    let mut colour : Option<[f32;3]> = None;
+    if let Ok(lines) = read_lines(fp) {
+        for line in lines {
+            if let Ok(ip) = line {
+                let fields = ip.split(';');
+                for (pos,feild) in fields.enumerate(){
+                    match pos{
+                        0 => {
+                            let rawtup = feild.replace(&['(',')',' '][..], "");
+                            let entries = rawtup.split(',');
+                            to = Some(entries.map(|v| v.parse::<f32>().unwrap())
+                                                .collect::<Vec<f32>>()
+                                                .try_into()
+                                                .unwrap());
+                        },
+                        1 => {
+                            let rawtup = feild.replace(&['(',')',' '][..], "");
+                            let entries = rawtup.split(',');
+                            from = Some(entries.map(|v| v.parse::<f32>().unwrap())
+                                                .collect::<Vec<f32>>()
+                                                .try_into()
+                                                .unwrap());
+                        },
+                        2 => {
+                            let rawtup = feild.replace(&['(',')',' '][..], "");
+                            let entries = rawtup.split(',');
+                            colour = Some(entries.map(|v| v.parse::<f32>().unwrap())
+                                                .collect::<Vec<f32>>()
+                                                .try_into()
+                                                .unwrap());
+                        },
+                        _ => {},
+                    }
+                }
+                let l = Line{
+                    to : to.take().unwrap(),
+                    from : from.take().unwrap(),
+                    colour : colour.take().unwrap(),
+                    width : width,
+                };
+                lvec.push(l);
+
+            }          
+        }
+    }
+    return lvec;
+}
+
+fn read_lines(filename: &str) -> io::Result<io::Lines<io::BufReader<File>>> {
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
 
 fn project(line: &Line, view: &View) -> Line {
@@ -279,7 +341,6 @@ fn splitlines(lines: Vec<Line>, view : &View) -> HashMap<[i32; 2], Vec<Line>> {
 }
 
 fn complete_rect(tiles: &mut HashMap<[i32; 2], Vec<Line>>) {
-    
     let xsize = tiles.keys().map(|cords| cords[0]).max().unwrap();
     let ysize = tiles.keys().map(|cords| cords[1]).min().unwrap();
 

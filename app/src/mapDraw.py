@@ -78,7 +78,7 @@ def draw(file, args):
 
         view = View((flat,flat-(args.stp/args.blk),flon+(args.stp/args.blk),flon),args.res)
         tik = time.perf_counter()
-        maptoolslib.drawfile(fcur,view,fout)
+        maptoolslib.drawfile(fcur,view,fout, args.seg_width)
         tok = time.perf_counter()
         rust_draw_concat(view,fout,fname)
         tuk = time.perf_counter()
