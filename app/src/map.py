@@ -47,14 +47,6 @@ def run(args):
 
     p.close()
     p.join()
-    
-    for root,dirs,files in os.walk(args.mapGreyInPath):
-        
-        with Pool(args.threads) as p:
-            p.map(partial(mapBitmap.grey, args = args), files)
-    
-    p.close()
-    p.join()
      
     mapBitmap.concat(args)
     print('Finished')

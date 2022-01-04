@@ -34,8 +34,13 @@ def concat(args):
        
        files.sort(key = row_major)
        
+    #flush cache to reload images from file
+    cs = pyvips.voperation.cache_get_max()
+    pyvips.voperation.cache_set_max(0)
+    pyvips.voperation.cache_set_max(cs)
+
     images = [pyvips.Image.new_from_file(args.mapConcatInPath+'\\'+file) for file in files]
-    
+
     outimg = pyvips.Image.arrayjoin(images, across = nx)
     
     outimg.write_to_file(args.mapConcatOutPath)

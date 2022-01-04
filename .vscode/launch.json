@@ -14,6 +14,13 @@
               }
         },
         {
+            "name": "Python: Launch",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/app/main.py",
+            "cwd": "${workspaceFolder}/app",
+        },
+        {
             "name": "LLDB: Attach",
             "type": "lldb",
             "request": "attach",
