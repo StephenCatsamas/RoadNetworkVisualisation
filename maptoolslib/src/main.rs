@@ -6,8 +6,10 @@ use draw::View;
 
 fn main()  {
 
-    let view = View { bounds: [-37.608,-37.94,145.173,144.72], res: 768.0 };
-    let lines = draw::linesfromfile("seg.csv", 0.05);
-
-    draw::drawlineset(lines, view, "rust_test\\");
+    let lines = draw::linesfromhex("seg.seg", 0.001);
+    
+    for _i in 0..20{
+        let view = View { bounds: [-37.608,-37.94,145.173,144.72], res: 4096.0 };
+        draw::drawlineset(lines.clone(), view, "rust_test\\");
+    }
 }

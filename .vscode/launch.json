@@ -36,7 +36,7 @@
             "cwd": "${workspaceFolder}/app",
         },
         {
-            "name": "Rust Debug",
+            "name": "LLDB: Launch",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/maptoolslib/target/debug/maptools",

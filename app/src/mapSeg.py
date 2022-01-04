@@ -3,6 +3,7 @@ import math
 import colorsys
 import lxml.etree as ET
 import csv
+from array import array
 
 
 def idSort(enum):
@@ -84,7 +85,7 @@ def colour(args,minilon,minilat,width):
         
     return colorsys.hsv_to_rgb(H,S,V)
 
-def seg_plot(args,lonlst,latlst,width, writer):
+def seg_plot(args,lonlst,latlst,width, outfile):
     for i,lat in enumerate(latlst):
         if i < len(latlst)-1:
         
@@ -96,21 +97,17 @@ def seg_plot(args,lonlst,latlst,width, writer):
             to = (minilat[0],minilon[0])
             fm = (minilat[1],minilon[1])
 
-            writer.writerow([to,fm,col])
-
-
-
+            fbin = array('f', to+fm+col)
+            fbin.tofile(outfile)
 
 def seg_thread(file, args):
 
     fcur = args.mapSegInPath+'\\'+file
-    fout = args.mapSegOutPath+'\\' +file[:-4] + '.csv'
+    fout = args.mapSegOutPath+'\\' +file[:-4] + '.seg'
     
     if (not (os.path.isfile(fout)) or args.force_seg):
     
-        with open(fout, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter=';',
-                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        with open(fout, 'wb') as outfile:
 
             myMap = ET.parse(fcur)
             root = myMap.getroot()
@@ -153,4 +150,6 @@ def seg_thread(file, args):
                         if tag.get('k') == 'highway':
                             width = tag.get('v')
                     
-                    seg_plot(args,lonlst,latlst,width, writer)
+                    seg_plot(args,lonlst,latlst,width, outfile)
+
+

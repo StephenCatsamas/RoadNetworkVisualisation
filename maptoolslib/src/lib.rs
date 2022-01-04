@@ -120,7 +120,7 @@ fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> P
     
 
     let view = View::frompy(py, view);
-    let lines = draw::linesfromfile(file, width);
+    let lines = draw::linesfromhex(file, width);
 
     draw::drawlineset(lines, view, fp);
 

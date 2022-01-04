@@ -1,34 +1,81 @@
 use std::f32::consts::PI;
 use std::collections::HashMap;
 use crate::renderer::{Line,make_draw_data,setup,run};
-use std::fs::File;
+
+use std::fs::{self, File};
 use std::io::{self, BufRead};
 
 
 pub const TILESIZE: f32 = 2.0;
 pub const TEXSIZE: f32 = 512 as f32;
 const F32MRG : f32 = 1E-6;
-
+const BINARY_LINE_SIZE : usize = (2+2+3)*4;//(to,from,colour) in f32s.
 
 pub fn drawlineset(lines : Vec<Line>, view : View, fp : &str){
-    let bgcolour = [0.1, 0.1, 0.1, 1.0];
+    let bgcolour = [0.05, 0.05, 0.05, 1.0];
 
-    let lines = toscreenspace(lines, &view);
+    let lines = toscreenspace(lines, &view);//6%
 
-    let tilehash = splitlines(lines, &view);
+    let tilehash = splitlines(lines, &view);//56%
 
     for (tile, lines) in &tilehash {
-        let vert_dat = make_draw_data(lines, &tile);
+        let vert_dat = make_draw_data(lines, &tile);//23%
 
-        let graphics = pollster::block_on(setup(vert_dat, bgcolour));
+        let graphics = pollster::block_on(setup(vert_dat, bgcolour));//9%
 
         let fptile = format!("{}{:?}.tiff", fp, tile);
         dbg!(&fptile);
-        pollster::block_on(run(graphics, &fptile));
+        pollster::block_on(run(graphics, &fptile));//4%
     }
 }
 
-pub fn linesfromfile(fp : &str, width : f32) -> Vec<Line>{
+fn btof32 (bref : &[u8]) -> f32{
+    const F32SIZE : usize = std::mem::size_of::<f32>();
+    let barr : [u8; F32SIZE] = bref.try_into().unwrap();
+    f32::from_ne_bytes(barr)
+}
+
+//use ittertools chunks to group binary data
+pub fn linesfromhex(fp : &str, width : f32) -> Vec<Line>{
+    const F32SIZE : usize = std::mem::size_of::<f32>();
+    let mut lvec = Vec::<Line>::new();
+
+    
+    let data = fs::read(fp).unwrap();
+        let lineiter = data.chunks_exact(BINARY_LINE_SIZE);
+        if lineiter.remainder().len() != 0 {
+            println!("WARN:: Unexpected data at end of segment file");
+        }
+        for binline in lineiter{
+            let mut to : [f32;2] = [f32::NAN; 2];
+            let mut from : [f32;2] = [f32::NAN; 2];
+            let mut colour : [f32;3] = [f32::NAN; 3];
+
+            for (field, bfltdat) in binline.chunks(F32SIZE).enumerate(){
+                match field{
+                    0 => {to[0] = btof32(bfltdat);}
+                    1 => {to[1] = btof32(bfltdat);}
+                    2 => {from[0] = btof32(bfltdat);}
+                    3 => {from[1] = btof32(bfltdat);}
+                    4 => {colour[0] = btof32(bfltdat);}
+                    5 => {colour[1] = btof32(bfltdat);}
+                    6 => {colour[2] = btof32(bfltdat);}
+                    _ => {},
+                }
+            }
+            let l = Line{
+                to,
+                from,
+                colour,
+                width : width,
+            };
+            lvec.push(l);         
+        }
+    
+    return lvec;
+}
+
+pub fn linesfromascii(fp : &str, width : f32) -> Vec<Line>{
     let mut lvec = Vec::<Line>::new();
 
     let mut to : Option<[f32;2]> = None;

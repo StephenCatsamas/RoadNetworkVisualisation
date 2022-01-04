@@ -40,11 +40,12 @@ def pull(args):
                     Qstr += ','
                     Qstr += str((lon+args.stp)/args.blk)
                     Qstr += '];('
-                    #Qstr += 'way[highway];'
-                    Qstr += 'way[highway = motorway];'
-                    Qstr += 'way[highway = trunk];'
-                    Qstr += 'way[highway = primary];'
-                    Qstr += 'way[highway = secondary];'
+                    Qstr += 'way[highway];'
+                    # Qstr += 'way[highway = motorway];'
+                    # Qstr += 'way[highway = trunk];'
+                    # Qstr += 'way[highway = primary];'
+                    # Qstr += 'way[highway = secondary];'
+                    # Qstr += 'way[highway = tertiary];'
                     Qstr += ');(._;>;);out;'
                     
                     
