@@ -12,7 +12,6 @@ fn main()  {
     //setup graphics.
     let mut graphics = pollster::block_on(renderer::setup());//9%
 
-    let lcpy = lines.clone();
-    draw::drawlineset(&mut graphics, lcpy, view, "rust_test\\");
+    draw::drawlineset(&mut graphics, lines, view, "rust_test\\");
 
 }

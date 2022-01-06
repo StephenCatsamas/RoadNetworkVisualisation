@@ -2,6 +2,8 @@ use std::num::NonZeroU32;
 use std::iter;
 use wgpu::util::DeviceExt;
 
+use crate::draw::{TILESIZE, TEXSIZE};
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
@@ -9,11 +11,16 @@ pub struct Vertex {
     colour: [f32; 3],
 }
 
-use crate::draw::{TILESIZE, TEXSIZE};
+#[repr(C)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+struct CameraUniform {
+    campos: [f32; 2],
+}
 
 
 
-fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBufferLayout, texture_desc : &wgpu::TextureDescriptor) -> wgpu::RenderPipeline{
+
+fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBufferLayout, cbg_layout: wgpu::BindGroupLayout, texture_desc : &wgpu::TextureDescriptor) -> wgpu::RenderPipeline{
     let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
         label: Some("Vertex Shader"),
         source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
@@ -21,7 +28,7 @@ fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBuffe
 
     let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("Render Pipeline Layout"),
-        bind_group_layouts: &[],
+        bind_group_layouts: &[&cbg_layout],
         push_constant_ranges: &[],
     });
 
@@ -52,8 +59,8 @@ fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBuffe
             cull_mode: None,
             // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
             polygon_mode: wgpu::PolygonMode::Fill,
-            // Requires Features::DEPTH_CLAMPING
-            clamp_depth: false,
+            // Requires Features::DEPTH_CLIP_CONTROL
+            unclipped_depth: false,
             // Requires Features::CONSERVATIVE_RASTERIZATION
             conservative: false,
         },
@@ -63,6 +70,7 @@ fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBuffe
             mask: !0,
             alpha_to_coverage_enabled: true,
         },
+        multiview: None,
     });
     
     return render_pipeline;
@@ -71,7 +79,7 @@ fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBuffe
 pub struct Graphics {
     dev : wgpu::Device,
     que : wgpu::Queue,
-    pub obff : wgpu::Buffer,
+    obff : wgpu::Buffer,
     rpl : wgpu::RenderPipeline,
     tex : wgpu::Texture,
     texaa : wgpu::Texture,
@@ -79,6 +87,8 @@ pub struct Graphics {
     texmemsz : wgpu::Extent3d,
     vbff: Option<wgpu::Buffer>,
     vbffsz: u32,
+    cbff: wgpu::Buffer,
+    cbg: wgpu::BindGroup,
 }
 
 
@@ -116,6 +126,47 @@ pub async fn setup() -> Graphics{
             }
         ]
     };
+
+    // // // // // // set camera buffer 
+    let camera_uniform = CameraUniform{campos : [0.0,0.0]
+    };
+
+    let camera_buffer = device.create_buffer_init(
+        &wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: bytemuck::cast_slice(&[camera_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        }
+    );
+
+
+    let camera_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        entries: &[
+            wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }
+        ],
+        label: Some("camera_bind_group_layout"),
+    });
+
+    let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        layout: &camera_bind_group_layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer.as_entire_binding(),
+            }
+        ],
+        label: Some("camera_bind_group"),
+    });
+     
 
     // // // // // // // output texture setup 
     let tex_size = TEXSIZE as u32;
@@ -162,8 +213,9 @@ pub async fn setup() -> Graphics{
     let output_buffer = device.create_buffer(&output_buffer_desc);
 
     // // // // // // setup rendering pipeline
-    let render_pipeline = make_render_pipeline(&device, vertex_buffer_layout, &tex_desc);
+    let render_pipeline = make_render_pipeline(&device, vertex_buffer_layout, camera_bind_group_layout, &tex_desc);
 
+    
     let graphics = Graphics {
         dev : device,
         que : queue,
@@ -175,6 +227,8 @@ pub async fn setup() -> Graphics{
         texmemsz : tex_mem_size,
         vbff : None,
         vbffsz : 0,
+        cbg : camera_bind_group,
+        cbff : camera_buffer,
     };
     return graphics;
 }
@@ -194,7 +248,7 @@ pub fn setvertdata(graphics : &mut Graphics, verticies : &Vec<Vertex>){
 }
 
 
-pub async fn run(graphics : &Graphics, bgcolour : [f32;4], fp : &str) {    
+pub async fn run(graphics : &Graphics, tile: [i32;2], bgcolour : [f32;4], fp : &str) {    
     let vbff = graphics.vbff.as_ref().unwrap();
     // // // // // // // background colour
     let bgcolour = wgpu::Color {
@@ -227,6 +281,7 @@ pub async fn run(graphics : &Graphics, bgcolour : [f32;4], fp : &str) {
 
         let mut render_pass = encoder.begin_render_pass(&render_pass_desc);
         render_pass.set_pipeline(&graphics.rpl);
+        render_pass.set_bind_group(0, &graphics.cbg, &[]);
         render_pass.set_vertex_buffer(0, vbff.slice(..));
         render_pass.draw(0..graphics.vbffsz, 0..1);
         
@@ -251,6 +306,15 @@ pub async fn run(graphics : &Graphics, bgcolour : [f32;4], fp : &str) {
         graphics.texmemsz,
     );
     // // // // // // // send commands to the gpu
+
+    let camera_uniform = CameraUniform {campos: [
+        (tile[0] as f32 + 0.5)*TILESIZE , 
+        (tile[1] as f32 + 0.5)*TILESIZE ,
+        ]
+    };
+
+    graphics.que.write_buffer(&graphics.cbff, 0, bytemuck::cast_slice(&[camera_uniform]));
+
     graphics.que.submit(iter::once(encoder.finish()));
     let buffer_slice = graphics.obff.slice(..);
 
@@ -395,13 +459,11 @@ fn torenderspace(lines: &Vec<Line>, tile: &[i32;2]) -> Vec<Line> {
     return slines;
 }
 
-pub fn make_draw_data(lines : &Vec<Line>, tile : &[i32;2]) -> Vec::<Vertex>{
+pub fn make_draw_data(lines : &Vec<Line>) -> Vec::<Vertex>{
     
     let mut vertex_data = Vec::<Vertex>::new();
     
-    let rednderlines = torenderspace(lines, tile);
-
-    let liter = rednderlines.iter();
+    let liter = lines.iter();
     
     for line in liter {
         let tris = line2tris(&line);
@@ -410,6 +472,8 @@ pub fn make_draw_data(lines : &Vec<Line>, tile : &[i32;2]) -> Vec::<Vertex>{
 
     return vertex_data;
 }
+
+
 
 #[derive(Debug, Clone)]
 pub struct Line{

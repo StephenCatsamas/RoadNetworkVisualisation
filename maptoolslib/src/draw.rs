@@ -14,19 +14,36 @@ const BINARY_LINE_SIZE : usize = (2+2+3)*4;//(to,from,colour) in f32s.
 pub fn drawlineset(graphics : &mut Graphics, lines : Vec<Line>, view : View, fp : &str){
     let bgcolour = [0.05, 0.05, 0.05, 1.0];
 
-    let lines = toscreenspace(lines, &view);//6%
+    let lines = toscreenspace(lines, &view);
 
-    let tilehash = splitlines(lines, &view);//56%
+    let vert_dat = renderer::make_draw_data(&lines);
 
-    for (tile, lines) in &tilehash {
+    renderer::setvertdata(graphics, &vert_dat);
+    
+    let rendertiles = view2tiles(&view);
+    for tile in rendertiles {
         let fptile = format!("{}{:?}.tiff", fp, tile);
         dbg!(&fptile);
 
-        let vert_dat = renderer::make_draw_data(lines, &tile);//23%
-        renderer::setvertdata(graphics, &vert_dat);
-
-        pollster::block_on(renderer::run(graphics, bgcolour, &fptile));//4%
+        pollster::block_on(renderer::run(graphics, tile, bgcolour, &fptile));//4%
     }
+}
+
+#[allow(non_snake_case)]
+fn view2tiles(view : &View) -> Vec<[i32;2]>{
+    let [Nv,Sv,Ev,Wv] = view.bounds;
+    
+    let (NWtile, _pos) = totile_pos(pix2scrn(deg2pix([Nv, Wv],&view)));
+    let (SEtile, _pos) = totile_pos(pix2scrn(deg2pix([Sv, Ev],&view)));
+
+    let mut rendertiles = Vec::<[i32;2]>::new();
+
+    for x in NWtile[0]..(SEtile[0]+1){//take noteness of endpoint inclusions
+    for y in SEtile[1]..NWtile[1]{
+        rendertiles.push([x,y]);
+    }
+    }
+    return rendertiles;
 }
 
 

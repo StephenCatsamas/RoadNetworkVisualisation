@@ -28,7 +28,9 @@ run: all
     
 runr: rust
     copy maptoolslib\target\debug\maptools.exe dbg\maptools.exe
-    @dbg\maptools.exe
+    @cd dbg
+    @maptools.exe
+    @cd ..
 
 profile: rust-release
     copy maptoolslib\target\release\maptools.exe perf\maptools.exe

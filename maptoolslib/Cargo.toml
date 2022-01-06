@@ -14,7 +14,7 @@ name = "maptoolslib"
 crate-type = ["dylib"]
 
 [dependencies]
-wgpu = "0.11"
+wgpu = "0.12"
 cpython = {version = "0.7.0", features = ["extension-module"]}
 bytemuck = {version = "1.4", features = ["derive"]}
 image = "0.23"

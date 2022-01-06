@@ -1,5 +1,11 @@
 // Vertex shader
 
+struct CameraUniform {
+    campos: vec2<f32>;
+};
+[[group(0), binding(0)]] 
+var<uniform> camera: CameraUniform;
+
 struct VertexInput {
     [[location(0)]] position: vec2<f32>;
     [[location(1)]] colour: vec3<f32>;
@@ -16,7 +22,8 @@ fn vs_main(
 ) -> VertexOutput {
     var out: VertexOutput;
     out.colour = model.colour;
-    out.clip_position = vec4<f32>(model.position, 0.0, 1.0);
+    let screenpos =  model.position - camera.campos;
+    out.clip_position = vec4<f32>(screenpos, 0.0, 1.0);
     return out;
 }
 
