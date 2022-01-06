@@ -41,40 +41,7 @@ def draw(file, args):
         Cic = file.find(".", Cib)
         
         flat = int(file[Cia+1:Cib])/args.blk
-        flon = int(file[Cib+1:Cic])/args.blk
-        
-
-        # with open(fcur, 'r', newline='') as csvfile:
-        #     reader = csv.reader(csvfile, delimiter=';',
-        #                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
-
-        #     n_rows = sum(1 for row in reader)       
-            
-        # with open(fcur, 'r', newline='') as csvfile:
-        #     reader = csv.reader(csvfile, delimiter=';',
-        #                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
-
-        #     lines = []
-
-        #     i = 0
-
-        #     for row in reader:
-        #         i += 1
-        #         lon = eval(row[0])
-        #         lat = eval(row[1])
-        #         col = eval(row[2])
-                
-               
-
-        #         p1 = (lat[0],lon[0])
-        #         p2 = (lat[1],lon[1])
-                
-        #         l = Line(p1,p2,args.seg_width, col)
-                
-        #         lines.append(l)
-                
-        #         if (i % 6000 == 0):
-        #             print("Drawing:", str(os.getpid()).zfill(6), "||", i, "of", n_rows)        
+        flon = int(file[Cib+1:Cic])/args.blk      
 
         view = View((flat,flat-(args.stp/args.blk),flon+(args.stp/args.blk),flon),args.res)
         tik = time.time()

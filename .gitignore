@@ -2,3 +2,5 @@ maps/
 tmp/
 __pycache__/
 target/
+dbg/
+perf/

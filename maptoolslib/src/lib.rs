@@ -112,17 +112,14 @@ fn linesfrompy(py: Python, lines: PyObject) -> Vec<Line> {
 }
 
 
-
-
-
-
 fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> PyResult<u64> {
     
 
     let view = View::frompy(py, view);
     let lines = draw::linesfromhex(file, width);
+    let mut graphics = pollster::block_on(renderer::setup());//9%
 
-    draw::drawlineset(lines, view, fp);
+    draw::drawlineset(&mut graphics, lines, view, fp);
 
     return Ok(1);
 }
@@ -133,7 +130,7 @@ fn drawlines(py: Python, lines: PyObject, view: PyObject, fp: &str) -> PyResult<
     let view = View::frompy(py, view);
     let lines = linesfrompy(py, lines);
 
-    draw::drawlineset(lines, view, fp);
+    // draw::drawlineset(lines, view, fp);
 
     return Ok(1);
 }

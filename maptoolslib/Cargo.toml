@@ -6,6 +6,9 @@ authors = ["Stephen Catsamas <seca8194@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.release]
+debug = 1
+
 [lib]
 name = "maptoolslib"
 crate-type = ["dylib"]

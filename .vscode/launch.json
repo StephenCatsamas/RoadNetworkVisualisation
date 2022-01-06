@@ -39,8 +39,8 @@
             "name": "LLDB: Launch",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/maptoolslib/target/debug/maptools",
-            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/dbg/maptools",
+            "cwd": "${workspaceFolder}/dbg/",
         },
     ]
 }
