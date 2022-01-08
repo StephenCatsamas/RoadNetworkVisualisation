@@ -29,6 +29,7 @@ pub fn drawlineset(graphics : &mut Graphics, lines : Vec<Line>, view : View, fp 
     }
 }
 
+
 #[allow(non_snake_case)]
 fn view2tiles(view : &View) -> Vec<[i32;2]>{
     let [Nv,Sv,Ev,Wv] = view.bounds;
@@ -93,6 +94,7 @@ pub fn linesfromhex(fp : &str, width : f32) -> Vec<Line>{
     return lvec;
 }
 
+#[allow(dead_code)]
 pub fn linesfromascii(fp : &str, width : f32) -> Vec<Line>{
     let mut lvec = Vec::<Line>::new();
 
@@ -381,7 +383,8 @@ fn gettiles(line: &Line) -> Vec<[i32; 2]> {
     return tiles;
 }
 
-
+#[allow(dead_code)]
+//splits lines into where they are visible from
 fn splitlines(lines: Vec<Line>, view : &View) -> HashMap<[i32; 2], Vec<Line>> {
     let mut tiles = HashMap::<[i32; 2], Vec<Line>>::new();
 

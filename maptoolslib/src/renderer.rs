@@ -433,7 +433,8 @@ fn line2tris(line : &Line) -> [Vertex; 6]{
     return [v1,v3,v2,v3,v4,v2];
 }
 
-
+#[allow(dead_code)]
+//for cpu positioing of lines in render space
 fn ltorenderspace(line: &Line, tile: &[i32;2]) -> Line{
     let [tx,ty] = line.to;
     let [fx,fy] = line.from;
