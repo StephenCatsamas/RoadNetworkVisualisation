@@ -22,6 +22,11 @@ rust-bin:
     $(CARGO) build $(CFLAGS) --bin maptools
     @cd ..
 
+rust-test:
+    @cd $(LIBDIR) 
+    $(CARGO) test $(CFLAGS)
+    @cd ..
+
 all: rust    
     copy  $(LIBFP)\maptoolslib.dll $(PYDFP)\maptoolslib.pyd
  
@@ -35,6 +40,10 @@ runr: rust-bin
     @cd dbg
     @maptools.exe
     @cd ..
+
+test: rust-test
+    
+
 
 .PHONY: clean
 clean:
