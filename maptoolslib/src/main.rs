@@ -1,11 +1,14 @@
 mod renderer;
 mod draw;
+mod seg;
 
 use draw::View;
 use std::time::{Instant};
 
 fn main()  {
-   
+    let mut tik = Instant::now();
+    seg::load_map();
+    println!("t0: {}", tik.elapsed().as_millis());
 
 }
 
@@ -23,7 +26,6 @@ fn bad_add(a: i32, b: i32) -> i32 {
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]

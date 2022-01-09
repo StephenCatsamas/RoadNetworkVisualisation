@@ -14,7 +14,8 @@ name = "maptoolslib"
 crate-type = ["dylib"]
 
 [dependencies]
-roxmltree = "0.14.1"
+lexical = "6.0.1"
+quick-xml = "0.22.0"
 wgpu = "0.12"
 cpython = {version = "0.7.0", features = ["extension-module"]}
 bytemuck = {version = "1.4", features = ["derive"]}
