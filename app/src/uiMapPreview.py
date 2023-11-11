@@ -150,7 +150,7 @@ class Fetcher():
             headers = {"User-Agent": "RoadNetworkVisualisation/0.dev"}
             print(url_string)
             img_data = requests.get(url_string, headers = headers).content
-            tile_data = pyvips.Image.new_from_buffer(img_data, "png")
+            tile_data = pyvips.Image.new_from_buffer(img_data, "")
             self.outbox.put((tile,tile_data))
             self.map.Refresh()
 
