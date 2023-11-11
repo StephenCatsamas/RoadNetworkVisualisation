@@ -43,7 +43,7 @@ def concat(args):
 
     #the reason we join rows first is because arrayjoin requires equally sized images but our tiles are not due to perspective.
     image_rows = [pyvips.Image.arrayjoin(images[i:i+nx], across = nx) 
-            for i in range(0,len(images),nx) ]
+            for i in range(0,len(images),nx)]
 
     #join rows
     outimg = image_rows[0]
