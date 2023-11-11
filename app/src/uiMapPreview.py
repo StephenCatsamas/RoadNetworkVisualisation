@@ -147,9 +147,10 @@ class Fetcher():
         while True:
             tile = self.inbox.get()
             url_string = "https://tile.openstreetmap.org/%d/%d/%d.png" % tile 
+            headers = {"User-Agent": "RoadNetworkVisualisation/0.dev"}
             print(url_string)
-            img_data = requests.get(url_string).content
-            tile_data = pyvips.Image.pngload_buffer(img_data)
+            img_data = requests.get(url_string, headers = headers).content
+            tile_data = pyvips.Image.new_from_buffer(img_data, "png")
             self.outbox.put((tile,tile_data))
             self.map.Refresh()
 

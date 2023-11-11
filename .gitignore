@@ -1,4 +1,5 @@
 *.pyd
+*.vscode
 
 maps/
 tmp/
