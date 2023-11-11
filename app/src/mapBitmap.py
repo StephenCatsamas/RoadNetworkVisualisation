@@ -41,6 +41,13 @@ def concat(args):
 
     images = [pyvips.Image.new_from_file(args.mapConcatInPath+'\\'+file) for file in files]
 
-    outimg = pyvips.Image.arrayjoin(images, across = nx)
+    #the reason we join rows first is because arrayjoin requires equally sized images but our tiles are not due to perspective.
+    image_rows = [pyvips.Image.arrayjoin(images[i:i+nx], across = nx) 
+            for i in range(0,len(images),nx) ]
+
+    #join rows
+    outimg = image_rows[0]
+    for image_row in image_rows[1:]:
+        outimg = outimg.join(image_row, 'vertical')
     
     outimg.write_to_file(args.mapConcatOutPath)

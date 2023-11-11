@@ -33,21 +33,21 @@ def run(args):
         p.close()
         p.join()
         
-    if args.force_seg:##note that this makes it a do seg rather than force
-        for root,dirs,files in os.walk(args.mapSegInPath):
-            with Pool(args.threads) as p:
-                p.map(partial(mapSeg.seg_thread, args = args), files,1)
-        p.close()
-        p.join()
+    # if args.force_seg:##note that this makes it a do seg rather than force
+    #     for root,dirs,files in os.walk(args.mapSegInPath):
+    #         with Pool(args.threads) as p:
+    #             p.map(partial(mapSeg.seg_thread, args = args), files,1)
+    #     p.close()
+    #     p.join()
  
-    for root,dirs,files in os.walk(args.mapDrawInPath):
-        for file in files:
-            mapDraw.draw(file,args)
-        # with Pool(args.threads) as p:
-        #     p.map(partial(mapDraw.draw, args = args), files,1)
+    # for root,dirs,files in os.walk(args.mapDrawInPath):
+    #     for file in files:
+    #         mapDraw.draw(file,args)
+    #     # with Pool(args.threads) as p:
+    #     #     p.map(partial(mapDraw.draw, args = args), files,1)
 
-    # p.close()
-    # p.join()
+    # # p.close()
+    # # p.join()
      
     mapBitmap.concat(args)
     print('Finished')
