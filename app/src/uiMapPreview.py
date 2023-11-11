@@ -177,7 +177,7 @@ class SlippyMap():
         x,y = pix
         
         zl = 2**(-(self.zoom+8))*360
-        if ref == None:
+        if ref is None:
             slat = self.screen_bounds[0]
             slon = self.screen_bounds[3]
         else:
@@ -275,18 +275,18 @@ class SlippyMap():
         else:
             print("drag locked")
     
-    def drag(self,movement):
-        
+    def drag(self,pxmove : tuple[int,int]):
+
         sN,sS,sE,sW = self.screen_bounds
         
         NWp = self.deg2pix((sN,sW))
         SEp = self.deg2pix((sS,sE))
         
-        NWp -= movement
-        SEp -= movement
+        NWpn = (NWp[0]-pxmove[0], NWp[1]-pxmove[1])
+        SEpn = (SEp[0]-pxmove[0], SEp[1]-pxmove[1])
         
-        sNc,sWc = self.pix2deg(NWp)
-        sSc,sEc = self.pix2deg(SEp)
+        sNc,sWc = self.pix2deg(NWpn)
+        sSc,sEc = self.pix2deg(SEpn)
                 
         if sWc < -180:
             sWc += 360

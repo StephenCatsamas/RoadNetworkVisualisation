@@ -154,7 +154,9 @@ class MapPanel(wx.Panel):
             move = newpos - self.mousepos
             self.mousepos = newpos
             
-            self.slippy.drag(move)
+
+
+            self.slippy.drag((move.x, move.y))
             self.slippy.rezoom = False
             self.Refresh()
     
