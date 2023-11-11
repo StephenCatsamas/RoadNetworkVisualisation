@@ -1,3 +1,6 @@
+*.pyd
+
+
 maps/
 tmp/
 __pycache__/
