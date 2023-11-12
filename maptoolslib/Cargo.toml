@@ -6,7 +6,7 @@ authors = ["Stephen Catsamas <seca8194@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[profile.release]
+[profile.release]   
 debug = 1
 
 [lib]
@@ -14,14 +14,14 @@ name = "maptoolslib"
 crate-type = ["dylib"]
 
 [dependencies]
-lexical = "6.0.1"
-quick-xml = "0.22.0"
-wgpu = "0.12"
-cpython = {version = "0.7.0", features = ["extension-module"]}
-bytemuck = {version = "1.4", features = ["derive"]}
-image = "0.23"
+lexical = "6.1.1"
+quick-xml = "0.31.0"
+wgpu = "0.18"
+cpython = {version = "0.7.1", features = ["extension-module"]}
+bytemuck = {version = "1.14", features = ["derive"]}
+image = "0.24.7"
 cgmath = "0.18"
-pollster = "0.2"
+pollster = "0.3"
 
 [build-dependencies]
 chrono = "0.4.19"
