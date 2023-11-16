@@ -17,6 +17,7 @@ crate-type = ["dylib"]
 lexical = "6.1.1"
 quick-xml = "0.31.0"
 wgpu = "0.18"
+futures-channel = "0.3"
 cpython = {version = "0.7.1", features = ["extension-module"]}
 bytemuck = {version = "1.14", features = ["derive"]}
 image = "0.24.7"

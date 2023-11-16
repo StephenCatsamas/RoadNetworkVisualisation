@@ -21,7 +21,7 @@ struct CameraUniform {
 
 
 fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBufferLayout, cbg_layout: wgpu::BindGroupLayout, texture_desc : &wgpu::TextureDescriptor) -> wgpu::RenderPipeline{
-    let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Vertex Shader"),
         source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
     });
@@ -43,14 +43,14 @@ fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBuffe
         fragment: Some(wgpu::FragmentState {
             module: &shader,
             entry_point: "fs_main",
-            targets: &[wgpu::ColorTargetState {
+            targets: &[Some(wgpu::ColorTargetState {
                 format: texture_desc.format,
                 blend: Some(wgpu::BlendState {
                     alpha: wgpu::BlendComponent::OVER,
                     color: wgpu::BlendComponent::OVER,
                 }),
                 write_mask: wgpu::ColorWrites::ALL,
-            }],
+            })],
         }),
         primitive: wgpu::PrimitiveState {
             topology: wgpu::PrimitiveTopology::TriangleList,
@@ -330,9 +330,14 @@ pub async fn run(graphics : &Graphics, tile: [i32;2], bgcolour : [f32;4], fp : &
 
     // NOTE: We have to create the mapping THEN device.poll() before await
     // the future. Otherwise the application will freeze.
-    let mapping = buffer_slice.map_async(wgpu::MapMode::Read);
+    let (sender, receiver) = futures_channel::oneshot::channel();
+    buffer_slice.map_async(wgpu::MapMode::Read,
+        |result| {
+        let _ = sender.send(result);
+    });
     graphics.dev.poll(wgpu::Maintain::Wait);
-    mapping.await.unwrap();
+    receiver.await.expect("communication failed")
+    .expect("buffer reading failed");
     // // // // // // save output to file
     {
         let data = buffer_slice.get_mapped_range();
