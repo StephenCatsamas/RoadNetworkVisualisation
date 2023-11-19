@@ -1,6 +1,6 @@
 use std::f32::consts::TAU as PI2;
 use std::collections::HashMap;
-use std::io::{Write,BufReader};
+use std::io::{Write,BufReader,BufWriter};
 use std::fs::File;
 use quick_xml as qxml;
 use qxml::{Reader, events::Event};
@@ -23,7 +23,7 @@ impl Way {
 
 pub fn tofile(fp :  &str, lines : Vec<Line>){
 
-    let mut f = File::create(fp).unwrap();
+    let mut f = BufWriter::new(File::create(fp).unwrap());
 
     for line in lines{
 

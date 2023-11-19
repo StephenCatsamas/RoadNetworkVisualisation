@@ -6,13 +6,12 @@ use draw::View;
 use std::time::Instant;
 
 fn main() {
-    // let mut tik = Instant::now();
-    // let segemnts = seg::load_map("map.osm");
-    // let lines = seg::format(segemnts);
-    // seg::tofile("segout.seg", lines);
-    // println!("t0: {}", tik.elapsed().as_millis());
+    let mut tik = Instant::now();
+    let segemnts = seg::load_map("map.osm");
+    let lines = seg::format(segemnts);
+    seg::tofile("segout.seg", lines);
+    println!("t0: {}", tik.elapsed().as_millis());
     // render_test();
-    let mut graphics = pollster::block_on(renderer::setup()); //9%
 }
 
 

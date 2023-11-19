@@ -44,7 +44,6 @@ def run(args):
     for root,dirs,files in os.walk(args.mapDrawInPath):
         with Pool(args.threads) as p:
             p.map(partial(mapDraw.draw, args = args), files,1)
-
     p.close()
     p.join()
      
