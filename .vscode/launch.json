@@ -39,6 +39,7 @@
             "name": "LLDB: Launch",
             "type": "lldb",
             "request": "launch",
+            "preLaunchTask": "rust_debug_build",
             "program": "${workspaceFolder}/dbg/maptools",
             "cwd": "${workspaceFolder}/dbg/",
         },

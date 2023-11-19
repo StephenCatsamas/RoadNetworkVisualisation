@@ -23,7 +23,7 @@ pub fn drawlineset(graphics : &mut Graphics, lines : Vec<Line>, view : View, fp 
     let rendertiles = view2tiles(&view);
     for tile in rendertiles {
         let fptile = format!("{}{:?}.tiff", fp, tile);
-        dbg!(&fptile);
+        // dbg!(&fptile);
 
         pollster::block_on(renderer::run(graphics, tile, bgcolour, &fptile));//4%
     }

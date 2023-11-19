@@ -4,6 +4,7 @@ extern crate cpython;
 use cpython::{ObjectProtocol, PyObject, PyResult, Python};
 
 mod renderer;
+mod seg;
 mod draw;
 
 use renderer::Line;
@@ -21,8 +22,8 @@ py_module_initializer!(maptoolslib, |py, m| {
     m.add(py, "rust_test", py_fn!(py, rust_test(a: i32)))?;
     m.add(
         py,
-        "drawlines",
-        py_fn!(py, drawlines(line: PyObject, view: PyObject, fp: &str)),
+        "segfile",
+        py_fn!(py, segfile(fin: &str, fout: &str)),
     )?;
     m.add(
         py,
@@ -94,23 +95,8 @@ impl Line {
 }
 
 
-fn linesfrompy(py: Python, lines: PyObject) -> Vec<Line> {
-    let liter = lines.iter(py).unwrap();
-
-    let mut lines = Vec::<Line>::new();
-
-    for line in liter {
-        let ln = Line::frompy(py, line.unwrap());
-        lines.push(ln);
-    }
-
-    return lines;
-}
-
-
 fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> PyResult<u64> {
     
-
     let view = View::frompy(py, view);
     let lines = draw::linesfromhex(file, width);
     let mut graphics = pollster::block_on(renderer::setup());
@@ -120,14 +106,11 @@ fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> P
     return Ok(1);
 }
 
-fn drawlines(py: Python, lines: PyObject, view: PyObject, fp: &str) -> PyResult<u64> {
+fn segfile(py: Python, fin: &str, fout: &str) -> PyResult<u64> {
     
-
-    let view = View::frompy(py, view);
-    let lines = linesfrompy(py, lines);
-    let mut graphics = pollster::block_on(renderer::setup());
-
-    draw::drawlineset(&mut graphics, lines, view, fp);
+    let segments = seg::load_map(fin);
+    let lines = seg::format(segments);
+    seg::tofile(fout, lines);
 
     return Ok(1);
 }

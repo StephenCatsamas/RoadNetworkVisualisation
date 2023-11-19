@@ -35,8 +35,10 @@ run: all
     main.py
     @cd ..
 
-runr: rust-bin
+rust-debug: rust-bin
     copy $(LIBFP)\maptools.exe dbg\maptools.exe
+
+runr: rust-debug
     @cd dbg
     @maptools.exe
     @cd ..
