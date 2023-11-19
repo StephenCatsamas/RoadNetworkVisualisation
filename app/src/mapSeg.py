@@ -2,7 +2,6 @@ import os
 import math
 import colorsys
 import lxml.etree as ET
-import csv
 from array import array
 
 

@@ -38,10 +38,6 @@ fn rust_test(_py: Python, a: i32) -> PyResult<u64> {
     Ok(7)
 }
 
-fn print_type_of<T>(_: &T) {
-    println!("{}", std::any::type_name::<T>())
-}
-
 fn array2<T>(tuple: (T, T)) -> [T; 2] {
     return [tuple.0, tuple.1];
 }
@@ -117,7 +113,7 @@ fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> P
 
     let view = View::frompy(py, view);
     let lines = draw::linesfromhex(file, width);
-    let mut graphics = pollster::block_on(renderer::setup());//9%
+    let mut graphics = pollster::block_on(renderer::setup());
 
     draw::drawlineset(&mut graphics, lines, view, fp);
 
@@ -129,8 +125,9 @@ fn drawlines(py: Python, lines: PyObject, view: PyObject, fp: &str) -> PyResult<
 
     let view = View::frompy(py, view);
     let lines = linesfrompy(py, lines);
+    let mut graphics = pollster::block_on(renderer::setup());
 
-    // draw::drawlineset(lines, view, fp);
+    draw::drawlineset(&mut graphics, lines, view, fp);
 
     return Ok(1);
 }

@@ -1,6 +1,7 @@
 import wx
 import wx.xrc
 import wx.stc
+import wx.lib.agw.hyperlink
 import csv
 import os
 import subprocess
@@ -143,9 +144,7 @@ class MapPanel(wx.Panel):
 
         self.dragNW = MapSelectionDraggable(self.buttonbmp, 'NW', self, wx.ID_ANY, size = self.buttonbmp.GetSize())
         self.dragSE = MapSelectionDraggable(self.buttonbmp, 'SE', self, wx.ID_ANY, size = self.buttonbmp.GetSize())
-        
-        
-        
+                
     def dragstart(self, event):
         self.mousepos = event.GetPosition()
         
@@ -155,7 +154,9 @@ class MapPanel(wx.Panel):
             move = newpos - self.mousepos
             self.mousepos = newpos
             
-            self.slippy.drag(move)
+
+
+            self.slippy.drag((move.x, move.y))
             self.slippy.rezoom = False
             self.Refresh()
     
@@ -209,11 +210,13 @@ class MainForm ( wx.Frame ):
         self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
         self.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_3DLIGHT ) )
         
-        bSizermain = wx.BoxSizer( wx.HORIZONTAL )         
+        b_sizer_main = wx.BoxSizer( wx.HORIZONTAL )         
         
-        bSizer2 = wx.BoxSizer( wx.VERTICAL )
+        b_sizer_control = wx.BoxSizer( wx.VERTICAL )
+        b_sizer_map     = wx.BoxSizer( wx.VERTICAL )
+
         
-        bSizer2.SetMinSize( wx.Size( 400,-1 ) )
+        b_sizer_control.SetMinSize( wx.Size( 400,-1 ) )
         paramSizer = wx.GridSizer( 0, 2, 0, 0 )
 
         self.north_label = wx.StaticText( self, wx.ID_ANY, u"North Limit (deg):", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -280,10 +283,10 @@ class MainForm ( wx.Frame ):
         paramSizer.Add( self.draw_width, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
 
 
-        bSizer2.Add( paramSizer, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 5 )
+        b_sizer_control.Add( paramSizer, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 5 )
 
         self.m_staticline2 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-        bSizer2.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
+        b_sizer_control.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
 
         optionSizer = wx.WrapSizer( wx.HORIZONTAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
@@ -299,13 +302,13 @@ class MainForm ( wx.Frame ):
         optionSizer.Add( self.force_set_widg, 1, wx.ALL, 5 )
 
 
-        bSizer2.Add( optionSizer, 0, 0, 5 )
+        b_sizer_control.Add( optionSizer, 0, 0, 5 )
 
         self.m_staticline1 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-        bSizer2.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
+        b_sizer_control.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
 
 
-        bSizer2.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+        b_sizer_control.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
         self.infoSizer = wx.WrapSizer( wx.HORIZONTAL, 0 )
 
@@ -326,10 +329,10 @@ class MainForm ( wx.Frame ):
         self.infoSizer.Add( self.n_tiles_label, 1, wx.ALIGN_BOTTOM|wx.ALL, 5 )
 
 
-        bSizer2.Add( self.infoSizer, 0, wx.EXPAND, 5 )
+        b_sizer_control.Add( self.infoSizer, 0, wx.EXPAND, 5 )
 
         self.m_staticline11 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-        bSizer2.Add( self.m_staticline11, 0, wx.EXPAND|wx.BOTTOM|wx.RIGHT|wx.LEFT, 5 )
+        b_sizer_control.Add( self.m_staticline11, 0, wx.EXPAND|wx.BOTTOM|wx.RIGHT|wx.LEFT, 5 )
 
         confSizer = wx.FlexGridSizer( 0, 3, 0, 0 )
         confSizer.AddGrowableCol( 0 )
@@ -346,17 +349,29 @@ class MainForm ( wx.Frame ):
         confSizer.Add( self.cancel_button, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
 
 
-        bSizer2.Add( confSizer, 0, wx.EXPAND, 5 )
-        bSizermain.Add( bSizer2, 0, wx.EXPAND, 5 )
+        b_sizer_control.Add( confSizer, 0, wx.EXPAND, 5 )
+        b_sizer_main.Add( b_sizer_control, 0, wx.EXPAND, 5 )
 
         self.map_view = MapPanel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 400,400 ), wx.TAB_TRAVERSAL)
         self.map_view.SetMinSize( wx.Size( 400,400 ) )
         self.map_view.SetBackgroundStyle(wx.BG_STYLE_PAINT)
         
-        bSizermain.Add( self.map_view, 1, wx.EXPAND | wx.ALL, 5 )
+        self.map_link = wx.lib.agw.hyperlink.HyperLinkCtrl(self, 
+                                                           wx.ID_ANY, 
+                                                           u"OpenStreetMap", 
+                                                           wx.DefaultPosition, 
+                                                           wx.DefaultSize, 
+                                                           0,
+                                                           URL="openstreetmap.org/copyright" )
+
+
+        b_sizer_map.Add( self.map_view, 1, wx.ALL, 5 )
+        b_sizer_map.Add( self.map_link, 0, wx.ALL | wx.ALIGN_RIGHT, 5 )
+
+        b_sizer_main.Add( b_sizer_map, 1, wx.EXPAND | wx.ALL, 5 )
                 
        
-        self.SetSizer( bSizermain )
+        self.SetSizer( b_sizer_main )
         self.Layout()
 
         self.Centre( wx.BOTH )

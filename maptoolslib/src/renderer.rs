@@ -21,7 +21,7 @@ struct CameraUniform {
 
 
 fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBufferLayout, cbg_layout: wgpu::BindGroupLayout, texture_desc : &wgpu::TextureDescriptor) -> wgpu::RenderPipeline{
-    let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Vertex Shader"),
         source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
     });
@@ -43,14 +43,14 @@ fn make_render_pipeline(device : &wgpu::Device, vbuff_layout : wgpu::VertexBuffe
         fragment: Some(wgpu::FragmentState {
             module: &shader,
             entry_point: "fs_main",
-            targets: &[wgpu::ColorTargetState {
+            targets: &[Some(wgpu::ColorTargetState {
                 format: texture_desc.format,
                 blend: Some(wgpu::BlendState {
                     alpha: wgpu::BlendComponent::OVER,
                     color: wgpu::BlendComponent::OVER,
                 }),
                 write_mask: wgpu::ColorWrites::ALL,
-            }],
+            })],
         }),
         primitive: wgpu::PrimitiveState {
             topology: wgpu::PrimitiveTopology::TriangleList,
@@ -94,11 +94,16 @@ pub struct Graphics {
 
 pub async fn setup() -> Graphics{
     // // // // // // // instance
-    let instance = wgpu::Instance::new(wgpu::Backends::all());
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+        backends: wgpu::Backends::all(),
+        flags: Default::default(),
+        dx12_shader_compiler: Default::default(),
+        gles_minor_version: Default::default(),
+    });
     // // // // // // // make new adapter
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::default(),
+            power_preference: wgpu::PowerPreference::HighPerformance,
             compatible_surface: None,
             force_fallback_adapter: false,
         })
@@ -177,23 +182,25 @@ pub async fn setup() -> Graphics{
         depth_or_array_layers: 1,
     };
     let tex_desc_msaa =  wgpu::TextureDescriptor {
+        label: None,
         size: tex_mem_size,
         mip_level_count: 1,
         sample_count: 4,
         dimension: wgpu::TextureDimension::D2,
         format: wgpu::TextureFormat::Rgba8UnormSrgb,
         usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        label: None,
+        view_formats:  &[],
     };
 
     let tex_desc = wgpu::TextureDescriptor {
+        label: None,
         size: tex_mem_size,
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
         format: wgpu::TextureFormat::Rgba8UnormSrgb,
         usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        label: None,
+        view_formats:  &[],
     };
 
     let texture_msaa = device.create_texture(&tex_desc_msaa);
@@ -255,7 +262,8 @@ pub async fn run(graphics : &Graphics, tile: [i32;2], bgcolour : [f32;4], fp : &
         r: bgcolour[0] as f64, 
         g: bgcolour[1] as f64, 
         b: bgcolour[2] as f64, 
-        a: bgcolour[3] as f64,};
+        a: bgcolour[3] as f64,
+    };
 
     // // // // // // // create command encoder
     let mut encoder = graphics.dev
@@ -268,15 +276,17 @@ pub async fn run(graphics : &Graphics, tile: [i32;2], bgcolour : [f32;4], fp : &
         let texture_view_msaa = graphics.texaa.create_view(&Default::default());
         let render_pass_desc = wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
-            color_attachments: &[wgpu::RenderPassColorAttachment {
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view: &texture_view_msaa,
                 resolve_target: Some(&texture_view),
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(bgcolour),
-                    store: true,
+                    store: wgpu::StoreOp::Store,
                 },
-            }],
+            })],
             depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
         };
 
         let mut render_pass = encoder.begin_render_pass(&render_pass_desc);
@@ -299,8 +309,8 @@ pub async fn run(graphics : &Graphics, tile: [i32;2], bgcolour : [f32;4], fp : &
             buffer: &graphics.obff,
             layout: wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: NonZeroU32::new(u32_size * graphics.texsz),
-                rows_per_image: NonZeroU32::new(graphics.texsz),
+                bytes_per_row: Some(u32_size * graphics.texsz),
+                rows_per_image: Some(graphics.texsz),
             },
         },
         graphics.texmemsz,
@@ -320,9 +330,14 @@ pub async fn run(graphics : &Graphics, tile: [i32;2], bgcolour : [f32;4], fp : &
 
     // NOTE: We have to create the mapping THEN device.poll() before await
     // the future. Otherwise the application will freeze.
-    let mapping = buffer_slice.map_async(wgpu::MapMode::Read);
+    let (sender, receiver) = futures_channel::oneshot::channel();
+    buffer_slice.map_async(wgpu::MapMode::Read,
+        |result| {
+        let _ = sender.send(result);
+    });
     graphics.dev.poll(wgpu::Maintain::Wait);
-    mapping.await.unwrap();
+    receiver.await.expect("communication failed")
+    .expect("buffer reading failed");
     // // // // // // save output to file
     {
         let data = buffer_slice.get_mapped_range();
@@ -433,7 +448,8 @@ fn line2tris(line : &Line) -> [Vertex; 6]{
     return [v1,v3,v2,v3,v4,v2];
 }
 
-
+#[allow(dead_code)]
+//for cpu positioing of lines in render space
 fn ltorenderspace(line: &Line, tile: &[i32;2]) -> Line{
     let [tx,ty] = line.to;
     let [fx,fy] = line.from;

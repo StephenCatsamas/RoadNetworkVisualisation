@@ -69,7 +69,7 @@ def pull(args):
                     except requests.exceptions.ConnectionError:
                         time.sleep(20)
                     
-                    
+                    #BUG: there is a big here in the tile num and tile calc
                     print("Fetching Tile: ", str(tile_num), "of", str(tiles))
                     print("URL:", Qstr)
                     

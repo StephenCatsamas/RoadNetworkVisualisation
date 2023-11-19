@@ -1,44 +1,55 @@
 default: all
 
+!IF "$(G)" == "release"
+CFLAGS = --release
+RELEASE = release
+!ELSE
+RELEASE = debug
+!ENDIF
+
+CARGO = cargo
+LIBDIR = maptoolslib
+PYDFP = app\src
+LIBFP = $(LIBDIR)\target\$(RELEASE)
+
 rust:
-    @cd maptoolslib
-    cargo build
+    @cd $(LIBDIR) 
+    $(CARGO) build $(CFLAGS)
     @cd ..
 
-rust-release:
-    @cd maptoolslib
-    cargo build --release
+rust-bin:
+    @cd $(LIBDIR) 
+    $(CARGO) build $(CFLAGS) --bin maptools
     @cd ..
 
-rustt:
-    @cd maptoolslib
-    cargo test 
+rust-test:
+    @cd $(LIBDIR) 
+    $(CARGO) test $(CFLAGS)
     @cd ..
 
 all: rust    
-    copy maptoolslib\target\debug\maptoolslib.dll app\src\maptoolslib.pyd
-
-release: rust-release
-    copy maptoolslib\target\release\maptoolslib.dll app\src\maptoolslib.pyd
-    
+    copy  $(LIBFP)\maptoolslib.dll $(PYDFP)\maptoolslib.pyd
+ 
 run: all
     @cd app
     main.py
     @cd ..
-    
-runr: rust
-    copy maptoolslib\target\debug\maptools.exe dbg\maptools.exe
+
+runr: rust-bin
+    copy $(LIBFP)\maptools.exe dbg\maptools.exe
     @cd dbg
     @maptools.exe
     @cd ..
 
-profile: rust-release
-    copy maptoolslib\target\release\maptools.exe perf\maptools.exe
+test: rust-test
+    
 
+
+.PHONY: clean
 clean:
-    cd maptoolslib
+    cd $(LIBDIR) 
     cargo clean
     cd ..
     
-    del app\src\maptoolslib.pyd
+    del $(PYDFP)\maptoolslib.pyd
     
