@@ -76,7 +76,7 @@ def pix2deg(pix, ref, zoom):
     return (lat,lon)
 
 #find screen space pixel from lat and lon
-def deg2pix(deg, ref, zoom):
+def deg2pix(deg : (float, float), ref : (float, float), zoom : int) -> (int,int):
     lat,lon = deg
     
     zl = 2**((zoom+_LOG2TILESIZE))/360

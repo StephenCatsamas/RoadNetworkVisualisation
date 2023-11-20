@@ -9,7 +9,6 @@ import itertools
 from .args import * 
 from .mapUtil import * 
 
-ZOOM = 11
 def tiles_to_draw(args : ArgsContainer) -> list[Tile]:
     nwcorner = (args.Nf, args.Wf, ZOOM)
     secorner = (args.Sf, args.Ef, ZOOM)

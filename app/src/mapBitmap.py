@@ -4,6 +4,7 @@ import re
 import pyvips
 
 from .args import *
+from .mapUtil import *
 
 def row_major(file: str):
     zoom,xtile,ytile = [int(num) for num in re.findall(r'\d+', file)]
@@ -53,3 +54,31 @@ def concat(args : ArgsContainer):
         outimg = outimg.join(image_row, 'vertical')
     
     outimg.write_to_file(args.mapConcatOutPath)
+
+
+def crop(args : ArgsContainer):
+
+    tiles = []
+    for file in os.listdir(args.mapConcatInPath):
+        zoom,xtile,ytile = [int(num) for num in re.findall(r'\d+', file)]
+        tiles.append(Tile(zoom,xtile,ytile))
+
+    xs = [t.x for t in tiles]
+    ys = [t.x for t in tiles]
+
+
+
+    ref = num2deg(Tile(zoom,min(xs),min(ys)))
+
+    nwcorner = (args.Nf, args.Wf)
+    secorner = (args.Sf, args.Ef)
+
+    top, left = deg2pix(nwcorner, ref, ZOOM) 
+    bottom, right = deg2pix(secorner, ref, ZOOM) 
+
+    map = pyvips.Image.new_from_file(args.mapConcatOutPath)
+
+    map = map.crop(left, top, right-left, top-bottom)
+
+    map.write_to_file(args.mapConcatOutPath)
+

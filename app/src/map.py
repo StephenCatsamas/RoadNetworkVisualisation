@@ -55,6 +55,8 @@ def run(args: ArgsContainer):
     p.join()
      
     mapBitmap.concat(args)
+
+    mapBitmap.crop(args)
     print('Finished')
  
 if __name__ == '__main__':

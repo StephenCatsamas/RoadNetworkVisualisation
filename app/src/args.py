@@ -2,6 +2,8 @@ import math
 import os
 import csv
 
+ZOOM = 11
+
 class ArgsContainer():
 
     def __init__(self,file = 'lstarg.cfg'):
