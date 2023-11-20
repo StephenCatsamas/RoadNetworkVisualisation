@@ -25,7 +25,9 @@ def compatify(p,view):
     y = (2*(p[1]-lat))/range -1
     # print(x,y)
     return (x, y)
-    
+
+def init():
+    maptoolslib.graphics_init()
 
 def draw(file, args):
         
@@ -60,7 +62,7 @@ def rust_draw_concat(view,fout,fname):
     for root,dirs,files in os.walk(fout):
         
         files.sort(key = row_major)
-        print(files)
+        # print(files)
         nx = get_xtiles(files)
 
     images = [pyvips.Image.new_from_file(fout+file) for file in files]

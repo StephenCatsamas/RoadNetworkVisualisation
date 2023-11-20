@@ -3,6 +3,9 @@ import math
 import colorsys
 import lxml.etree as ET
 from array import array
+import time
+
+from . import maptoolslib
 
 
 def idSort(enum):
@@ -99,56 +102,13 @@ def seg_plot(args,lonlst,latlst,width, outfile):
             fbin = array('f', to+fm+col)
             fbin.tofile(outfile)
 
-def seg_thread(file, args):
-
-    fcur = args.mapSegInPath+'\\'+file
+def seg(file, args):
+    fin = args.mapSegInPath+'\\'+file
     fout = args.mapSegOutPath+'\\' +file[:-4] + '.seg'
     
+    # implement caching
     if (not (os.path.isfile(fout)) or args.force_seg):
-    
-        with open(fout, 'wb') as outfile:
-
-            myMap = ET.parse(fcur)
-            root = myMap.getroot()
-
-            nodeKeys = list()
-            
-            for child in root:
-                if child.tag == 'node':
-                    nodeKeys.append(child.get('id'))
-
-            nodeDict = dict.fromkeys(nodeKeys)
-            
-            for child in root:
-                if child.tag == 'node':
-                    nodeDict[child.get('id')] = (child.get('lat'), child.get('lon'))
-            
-            i=0
-            
-            for child in root:
-            
-                i += 1
-                if (i % 5000 == 0):
-                    print("Segmenting:", str(os.getpid()).zfill(6), "||", i, "of" , len(root))
-            
-                if child.tag == 'way':
-                
-                    latlst = list()
-                    lonlst = list()
-                    
-                    for tag in child:
-                        if tag.get("ref") != None:
-                            id = tag.get("ref")
-                            
-                            coord = nodeDict[id]
-
-
-                            latlst.append(float(coord[0]))
-                            lonlst.append(float(coord[1]))
-                            continue
-                        if tag.get('k') == 'highway':
-                            width = tag.get('v')
-                    
-                    seg_plot(args,lonlst,latlst,width, outfile)
-
-
+        tik = time.time()
+        maptoolslib.segfile(fin,fout)
+        tok = time.time()
+        print("Time to seg: ", tok - tik)

@@ -1,37 +1,18 @@
-#[macro_use]
-extern crate cpython;
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
 
-use cpython::{ObjectProtocol, PyObject, PyResult, Python};
+use std::time::Instant;
 
-mod renderer;
 mod draw;
+mod renderer;
+mod seg;
 
-use renderer::Line;
 use draw::View;
+use renderer::Graphics;
 
-py_module_initializer!(maptoolslib, |py, m| {
-    m.add(
-        py,
-        "__doc__",
-        concat!(
-            "rust lib built at: ",
-            include!(concat!(env!("OUT_DIR"), "/timestamp.txt"))
-        ),
-    )?;
-    m.add(py, "rust_test", py_fn!(py, rust_test(a: i32)))?;
-    m.add(
-        py,
-        "drawlines",
-        py_fn!(py, drawlines(line: PyObject, view: PyObject, fp: &str)),
-    )?;
-    m.add(
-        py,
-        "drawfile",
-        py_fn!(py, drawfile(file: &str, view: PyObject, fp: &str, width : f32)),
-    )?;
-    Ok(())
-});
+static mut GRAPHICS: Option<Graphics> = None;
 
+#[pyfunction]
 fn rust_test(_py: Python, a: i32) -> PyResult<u64> {
     println!("{}", a);
 
@@ -62,73 +43,47 @@ impl View {
     }
 }
 
-impl Line {
-    fn frompy(py: Python, line: PyObject) -> Line {
-        let t = array2(
-            line.getattr(py, "to")
-                .unwrap()
-                .extract::<(f32, f32)>(py)
-                .unwrap(),
-        );
-        let f = array2(
-            line.getattr(py, "fm")
-                .unwrap()
-                .extract::<(f32, f32)>(py)
-                .unwrap(),
-        );
-        let c = array3(
-            line.getattr(py, "colour")
-                .unwrap()
-                .extract::<(f32, f32, f32)>(py)
-                .unwrap(),
-        );
-        let w = line.getattr(py, "width").unwrap().extract(py).unwrap();
-        let line = Line {
-            to: t,
-            from: f,
-            colour: c,
-            width: w,
-        };
-        return line;
+#[pyfunction]
+fn graphics_init(py: Python) -> PyResult<u64> {
+    unsafe {
+        let tik = Instant::now();
+        if GRAPHICS.is_none() {
+            GRAPHICS = Some(pollster::block_on(renderer::setup()));
+        }
+        println!("initialised graphics: {}", tik.elapsed().as_millis());
     }
+    return Ok(0);
 }
 
+#[pyfunction]
+fn drawfile(py: Python, fin: &str, view: PyObject, fout: &str, width: f32) -> PyResult<u64> {
+    let view = View::frompy(py, view);
+    let lines = draw::linesfromhex(fin, width);
 
-fn linesfrompy(py: Python, lines: PyObject) -> Vec<Line> {
-    let liter = lines.iter(py).unwrap();
-
-    let mut lines = Vec::<Line>::new();
-
-    for line in liter {
-        let ln = Line::frompy(py, line.unwrap());
-        lines.push(ln);
+    unsafe {
+        let mut graphics = GRAPHICS
+            .take()
+            .ok_or_else(|| PyValueError::new_err("GRAPHICS is None"))?;
+        draw::drawlineset(&mut graphics, lines, view, fout);
+        GRAPHICS = Some(graphics);
     }
-
-    return lines;
+    return Ok(0);
 }
 
+#[pyfunction]
+fn segfile(py: Python, fin: &str, fout: &str) -> PyResult<u64> {
+    let segments = seg::load_map(fin);
+    let lines = seg::format(segments);
+    seg::tofile(fout, lines);
 
-fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> PyResult<u64> {
-    
-
-    let view = View::frompy(py, view);
-    let lines = draw::linesfromhex(file, width);
-    let mut graphics = pollster::block_on(renderer::setup());
-
-    draw::drawlineset(&mut graphics, lines, view, fp);
-
-    return Ok(1);
+    return Ok(0);
 }
 
-fn drawlines(py: Python, lines: PyObject, view: PyObject, fp: &str) -> PyResult<u64> {
-    
-
-    let view = View::frompy(py, view);
-    let lines = linesfrompy(py, lines);
-    let mut graphics = pollster::block_on(renderer::setup());
-
-    draw::drawlineset(&mut graphics, lines, view, fp);
-
-    return Ok(1);
+#[pymodule]
+fn maptoolslib(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(rust_test, m)?)?;
+    m.add_function(wrap_pyfunction!(graphics_init, m)?)?;
+    m.add_function(wrap_pyfunction!(segfile, m)?)?;
+    m.add_function(wrap_pyfunction!(drawfile, m)?)?;
+    Ok(())
 }
-
