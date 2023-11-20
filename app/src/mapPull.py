@@ -10,39 +10,19 @@ import itertools
 from .args import * 
 from .mapUtil import * 
 
-ZOOM = 10
-TILE_SIZE = 256
-SCREEN_SIZE = (1024,1024)
-def tiles_to_draw(args : ArgsContainer):
-    nwcorner = (args.Nf, args.Wf)
+ZOOM = 11
+def tiles_to_draw(args : ArgsContainer) -> list[(int,int,int)]:
+    nwcorner = (args.Nf, args.Wf, ZOOM)
+    secorner = (args.Sf, args.Ef, ZOOM)
 
-    
-    xSize,ySize = SCREEN_SIZE
-    jump = TILE_SIZE
-    
-    tiles = []
-    
-    xords = itertools.chain(range(0, xSize, jump),[xSize])
-    yords = itertools.chain(range(0, ySize,jump), [ySize])
-    
-    coords = itertools.product(xords,yords)
-    
-    for x,y in coords:                
-        N,W = pix2deg((x,y), nwcorner, ZOOM)
-        
-        xtile,ytile = deg2num(N,W,ZOOM)
-        
-        newtile = (xtile,ytile,ZOOM)
-        if newtile not in tiles:
-            tiles.append(newtile) 
-    
-    xs = {x for z,x,y in tiles}
-    ys = {y for z,x,y in tiles}
-    
-    grid = (len(xs),len(ys))
-    return tiles,grid
+    xa, ya = deg2num(*nwcorner)
+    xb, yb = deg2num(*secorner)
 
-def requst_tile(mapPullOutPath : str, tile):
+    tiles = [(x, y, ZOOM) for x in range(xa, xb + 1) for y in range(ya, yb + 1)]
+
+    return tiles
+
+def request_tile(mapPullOutPath : str, tile):
     north,west  = num2deg(*tile)
     swtile = (tile[0]+1, tile[1]+1, tile[2])
     south,east = num2deg(*swtile)
@@ -105,12 +85,12 @@ def requst_tile(mapPullOutPath : str, tile):
                 pass
 
 def pull_tiles(args : ArgsContainer):
-    tiles,grid = tiles_to_draw(args)
+    tiles = tiles_to_draw(args)
 
     num_tiles = len(tiles)
     for i,tile in enumerate(tiles):
         print("Fetching Tile: ", str(i), "of", str(num_tiles))
-        requst_tile(args.mapPullOutPath, tile)
+        request_tile(args.mapPullOutPath, tile)
 
 def pull(args : ArgsContainer):
     
