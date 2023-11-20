@@ -127,11 +127,11 @@ class MapSelectionDraggable(wx.Panel):
             
     
 class MapPanel(wx.Panel):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, cache_path, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         self.mousepos = (0,0)
         
-        self.slippy = uiMapPreview.SlippyMap(self)
+        self.slippy = uiMapPreview.SlippyMap(self, cache_path)
         self.Bind( wx.EVT_PAINT, self.paint_map)
         self.Bind( wx.EVT_SIZE , self.map_resize)
         self.Bind( wx.EVT_MOUSEWHEEL, self.zoom)
@@ -203,6 +203,13 @@ class MainForm ( wx.Frame ):
     def __init__( self, parent ):    
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Road Network Visualisation", pos = wx.DefaultPosition, size = wx.Size( 800,450 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
         
+        self.args = ArgsContainer() 
+        for folder in self.args.slippy_folders:
+            if not os.path.exists(folder):
+                print()
+                os.makedirs(folder)
+        
+
         dirname = os.path.dirname(__file__)
         fp = os.path.join(dirname, "../ico/icon.ico")
         self.SetIcon(wx.Icon(fp))
@@ -352,7 +359,7 @@ class MainForm ( wx.Frame ):
         b_sizer_control.Add( confSizer, 0, wx.EXPAND, 5 )
         b_sizer_main.Add( b_sizer_control, 0, wx.EXPAND, 5 )
 
-        self.map_view = MapPanel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 400,400 ), wx.TAB_TRAVERSAL)
+        self.map_view = MapPanel( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 400,400 ), wx.TAB_TRAVERSAL, cache_path= self.args.mapTileCachePath)
         self.map_view.SetMinSize( wx.Size( 400,400 ) )
         self.map_view.SetBackgroundStyle(wx.BG_STYLE_PAINT)
         
@@ -365,7 +372,7 @@ class MainForm ( wx.Frame ):
                                                            URL="openstreetmap.org/copyright" )
 
 
-        b_sizer_map.Add( self.map_view, 1, wx.ALL, 5 )
+        b_sizer_map.Add( self.map_view, 1, wx.ALL | wx.EXPAND, 5 )
         b_sizer_map.Add( self.map_link, 0, wx.ALL | wx.ALIGN_RIGHT, 5 )
 
         b_sizer_main.Add( b_sizer_map, 1, wx.EXPAND | wx.ALL, 5 )
@@ -392,7 +399,6 @@ class MainForm ( wx.Frame ):
         self.restore_button.Bind( wx.EVT_BUTTON, lambda a : self.restore_options() )
         
         #load defaults
-        self.initargs()
         self.updatewidgets()
         
 

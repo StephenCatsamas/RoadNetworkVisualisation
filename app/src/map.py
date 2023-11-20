@@ -13,13 +13,13 @@ from multiprocessing import Pool
 
 def run(args): 
     if args.flush_map_cache:
-        for folder in args.folders:
+        for folder in args.render_folders:
             for root,dirs,files in os.walk(folder):
                 for file in files:
                     print("Removing: ", root + '\\' + file)
                     os.remove(root + '\\' + file)
         
-    for folder in args.folders:
+    for folder in args.render_folders:
         if not os.path.exists(folder):
             print()
             os.makedirs(folder)

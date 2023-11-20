@@ -1,5 +1,4 @@
 use std::iter;
-use std::time::Instant;
 use wgpu::util::DeviceExt;
 
 use crate::draw::{TEXSIZE, TILESIZE};
@@ -95,18 +94,14 @@ pub struct Graphics {
 }
 
 pub async fn setup() -> Graphics {
-    let mut tik: Instant;
     // // // // // // // instance
-    tik = Instant::now();
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         backends: wgpu::Backends::all(),
         flags: Default::default(),
         dx12_shader_compiler: Default::default(),
         gles_minor_version: Default::default(),
     });
-    //println!("instance: {}", tik.elapsed().as_millis());
     // // // // // // // make new adapter
-    tik = Instant::now();
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
@@ -116,19 +111,15 @@ pub async fn setup() -> Graphics {
         .await
         .unwrap();
 
-    //println!("make new adapter: {}", tik.elapsed().as_millis());
-    let adapter_name = adapter.get_info().name;
+    // let adapter_name = adapter.get_info().name;
     // //println!("Selected adapter: {}", adapter_name);
 
     // // // // // // // make new device and queue
-    tik = Instant::now();
     let (device, queue) = adapter
         .request_device(&Default::default(), None)
         .await
         .unwrap();
-    //println!("make new device and queue: {}", tik.elapsed().as_millis());
     // // // // // // // set vertex buffer layout
-    tik = Instant::now();
     let vertex_buffer_layout = wgpu::VertexBufferLayout {
         array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress, // 1.
         step_mode: wgpu::VertexStepMode::Vertex,                            // 2.
@@ -146,9 +137,7 @@ pub async fn setup() -> Graphics {
             },
         ],
     };
-    //println!("set vertex buffer layout: {}", tik.elapsed().as_millis());
     // // // // // // set camera buffer
-    tik = Instant::now();
     let camera_uniform = CameraUniform { campos: [0.0, 0.0] };
 
     let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -180,9 +169,7 @@ pub async fn setup() -> Graphics {
         }],
         label: Some("camera_bind_group"),
     });
-    //println!("set camera buffer: {}", tik.elapsed().as_millis());
     // // // // // // // output texture setup
-    tik = Instant::now();
     let tex_size = TEXSIZE as u32;
 
     let tex_mem_size = wgpu::Extent3d {
@@ -215,9 +202,7 @@ pub async fn setup() -> Graphics {
     let texture_msaa = device.create_texture(&tex_desc_msaa);
     let texture = device.create_texture(&tex_desc);
 
-    //println!("output texture setup: {}", tik.elapsed().as_millis());
     // // // // // // make output buffer
-    tik = Instant::now();
     let u32_size = std::mem::size_of::<u32>() as u32;
     let output_buffer_size = (u32_size * tex_size * tex_size) as wgpu::BufferAddress;
     let output_buffer_desc = wgpu::BufferDescriptor {
@@ -230,9 +215,7 @@ pub async fn setup() -> Graphics {
     };
     let output_buffer = device.create_buffer(&output_buffer_desc);
     
-    //println!("make output buffer: {}", tik.elapsed().as_millis());
     // // // // // // setup rendering pipeline
-    tik = Instant::now();
     let render_pipeline = make_render_pipeline(
         &device,
         vertex_buffer_layout,
@@ -254,7 +237,6 @@ pub async fn setup() -> Graphics {
         cbg: camera_bind_group,
         cbff: camera_buffer,
     };
-    //println!("setup rendering pipeline: {}", tik.elapsed().as_millis());
     return graphics;
 }
 

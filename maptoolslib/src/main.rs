@@ -11,7 +11,7 @@ fn main() {
     // let lines = seg::format(segemnts);
     // seg::tofile("segout.seg", lines);
     // println!("t0: {}", tik.elapsed().as_millis());
-    render_test();
+    // render_test();
 }
 
 

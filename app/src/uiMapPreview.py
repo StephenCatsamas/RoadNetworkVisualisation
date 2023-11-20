@@ -6,6 +6,7 @@ import threading
 import os
 from queue import Queue,LifoQueue
 import time
+import random
 
 def sectan(z):
     v = (1/math.cos(z)) + math.tan(z)
@@ -64,14 +65,14 @@ def num2deg(xtile, ytile, zoom):
   return (lat_deg, lon_deg)
 
 class TileCache():
-    def __init__(self, parent):
+    def __init__(self, parent, cache_path):
         self.tiles = {}
-        self.fetcher = Fetcher(parent)
+        self.fetcher = Fetcher(parent, cache_path)
         self.tile_queue = []
         ##maybe in we need more performance we will also cache the sitch
         # self.stich_tiles = None
         # self.stich = None
-        self.max_cache_size = 256
+        self.max_cache_size = 2048
         
         dirname = os.path.dirname(__file__)
         fp = os.path.join(dirname, '../ico/loadingtile.png')
@@ -137,27 +138,69 @@ class TileCache():
         return [tile for tile in tiles if tile not in self.tiles]  
 
 class Fetcher():
-    def __init__(self, parent):
+    def __init__(self, parent, cache_path):
         self.inbox = LifoQueue()#issue the bottom will fill up with very old tiles which we no longer need
         self.outbox = Queue()
         self.thread = threading.Thread(target=self.fetch, daemon = True)
         self.map = parent
+        self.cache_path = cache_path
+        self.num_cached_files = len([f for f in os.listdir(self.cache_path) if os.path.isfile(os.path.join(self.cache_path, f))])
+        self.max_num_cached_files = 0x8000
+
+        self.prune_disk_cache()
     
     def fetch(self):
         while True:
             tile = self.inbox.get()
-            url_string = "https://tile.openstreetmap.org/%d/%d/%d.png" % tile 
-            headers = {"User-Agent": "RoadNetworkVisualisation/0.dev"}
-            print(url_string)
-            img_data = requests.get(url_string, headers = headers).content
-            tile_data = pyvips.Image.new_from_buffer(img_data, "")
+            tile_fp = self.cache_path + "/_z%d_x%d_y%d.png" % tile
+            if os.path.isfile(tile_fp):
+                tile_data = pyvips.Image.new_from_file(tile_fp)
+            else:
+                url_string = "https://tile.openstreetmap.org/%d/%d/%d.png" % tile 
+                headers = {"User-Agent": "RoadNetworkVisualisation/0.dev"}
+                print(url_string)
+                img_data = requests.get(url_string, headers = headers).content
+
+                if self.num_cached_files > self.max_num_cached_files:
+                    self.prune_disk_cache()
+
+                with open(tile_fp, "wb") as tilef:
+                    tilef.write(img_data)
+                    self.num_cached_files += 1
+
+                tile_data = pyvips.Image.new_from_buffer(img_data, "")
+                
             self.outbox.put((tile,tile_data))
             self.map.Refresh()
 
+    def prune_disk_cache(self):
+
+        files = [f for f in os.listdir(self.cache_path) if os.path.isfile(os.path.join(self.cache_path, f))]
+
+        for file in files:
+            file_path = os.path.join(self.cache_path, file)
+            if os.path.exists(file_path):
+                file_age = time.time() - os.path.getctime(file_path)
+                if file_age > 7 * 24 * 60 * 60:  # 7 days in seconds
+                    os.remove(file_path)
+
+        files = [f for f in os.listdir(self.cache_path) if os.path.isfile(os.path.join(self.cache_path, f))]
+
+        if(len(files) > self.max_num_cached_files//2):
+            print(len(files))
+            random.shuffle(files)
+            for file in files[0:len(files)//2]:
+                file_path = os.path.join(self.cache_path, file)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            
+
+
+
 
 class SlippyMap():
-    def __init__(self, parent):
-        self.tileCache = TileCache(parent)
+    def __init__(self, parent, cache_path):
+        self.tileCache = TileCache(parent, cache_path)
         self.rezoom = True
         
         #server thread

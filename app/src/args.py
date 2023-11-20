@@ -25,19 +25,22 @@ class ArgsContainer():
         ##############################################################################
         self.blk = 1000
 
-        self.folders = list()
+        self.render_folders = list()
 
-        self.folders.append(self.mapPullOutPath)
-        self.folders.append(self.mapStreetInPath)
-        self.folders.append(self.mapStreetOutPath)
-        self.folders.append(self.mapSegInPath)
-        self.folders.append(self.mapSegOutPath)
-        self.folders.append(self.mapDrawInPath)
-        self.folders.append(self.mapDrawOutPath)
-        self.folders.append(self.mapGreyInPath)
-        self.folders.append(self.mapGreyOutPath)
-        self.folders.append(self.mapGrayMaskPath)
-        self.folders.append(self.mapConcatInPath)
+        self.render_folders.append(self.mapPullOutPath)
+        self.render_folders.append(self.mapStreetInPath)
+        self.render_folders.append(self.mapStreetOutPath)
+        self.render_folders.append(self.mapSegInPath)
+        self.render_folders.append(self.mapSegOutPath)
+        self.render_folders.append(self.mapDrawInPath)
+        self.render_folders.append(self.mapDrawOutPath)
+        self.render_folders.append(self.mapGreyInPath)
+        self.render_folders.append(self.mapGreyOutPath)
+        self.render_folders.append(self.mapGrayMaskPath)
+        self.render_folders.append(self.mapConcatInPath)
+
+        self.slippy_folders = list()
+        self.slippy_folders.append(self.mapTileCachePath)
 
         if not self.do_cull:
             self.mapSegInPath = self.mapStreetInPath
@@ -102,6 +105,8 @@ class ArgsContainer():
         self.mapConcatInPath = str(self.filedict['mapConcatInPath']).strip('"')
         self.mapConcatOutPath = str(self.filedict['mapConcatOutPath']).strip('"')
 
+        self.mapTileCachePath = str(self.filedict['mapTileCachePath']).strip('"')
+
     def name2dict(self):
         self.filedict['colour_mode'] = '"' + self.colour_mode + '"'
         self.filedict['flush_map_cache'] = str(self.flush_map_cache)
@@ -136,4 +141,6 @@ class ArgsContainer():
         
         self.filedict['mapConcatInPath'] = '"' + self.mapConcatInPath + '"'
         self.filedict['mapConcatOutPath'] = '"' + self.mapConcatOutPath + '"'
+
+        self.filedict['mapTileCachePath'] = '"' + self.mapTileCachePath + '"'
 

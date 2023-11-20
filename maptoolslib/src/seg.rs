@@ -72,6 +72,7 @@ pub fn format(segs : (Vec::<Way>,HashMap<u64, [f32;2]>)) -> Vec<Line>{
 
 }
 
+#[allow(unused_variables)]
 fn colourfunc(to : [f32;2], from : [f32;2]) -> [f32;3]{
     let dlat = to[0] - from[0];
     let dlon = to[1] - from[1];
@@ -87,6 +88,7 @@ fn colourfunc(to : [f32;2], from : [f32;2]) -> [f32;3]{
     return [h,s,v]
 }
 
+#[allow(unused_variables)]
 fn widthfunc(to : [f32;2], from : [f32;2]) -> f32{
     0.1
 }
@@ -174,7 +176,7 @@ fn xml_nd(e : &qxml::events::BytesStart) -> u64{
 fn xml_way(r : &mut Reader<BufReader<File>>, mut buf : &mut Vec<u8>, es : &qxml::events::BytesStart) -> Way{
     let mut way = Way::new();
     
-    let nm = es.name().as_ref();
+    // let nm = es.name().as_ref();
     loop {
         match r.read_event_into(&mut buf) {
 
@@ -191,8 +193,8 @@ fn xml_way(r : &mut Reader<BufReader<File>>, mut buf : &mut Vec<u8>, es : &qxml:
         
             Ok(Event::End(ref e)) => {
                 match e.name().as_ref() {
-                    nm => break,
-                    _ => (),
+                    _ => break,
+                    // _ => (),
                 }
             },
 

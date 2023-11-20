@@ -12,11 +12,11 @@ use renderer::Graphics;
 
 static mut GRAPHICS: Option<Graphics> = None;
 
-#[pyfunction]
-fn rust_test(_py: Python, a: i32) -> PyResult<u64> {
-    println!("{}", a);
 
-    Ok(7)
+#[pyfunction]
+fn info(_py: Python) -> PyResult<u64> {
+    println!(concat!("rust lib built at: ", include!(concat!(env!("OUT_DIR"), "/timestamp.txt"))));
+    Ok(0)
 }
 
 fn array2<T>(tuple: (T, T)) -> [T; 2] {
@@ -81,7 +81,7 @@ fn segfile(py: Python, fin: &str, fout: &str) -> PyResult<u64> {
 
 #[pymodule]
 fn maptoolslib(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(rust_test, m)?)?;
+    m.add_function(wrap_pyfunction!(info, m)?)?;
     m.add_function(wrap_pyfunction!(graphics_init, m)?)?;
     m.add_function(wrap_pyfunction!(segfile, m)?)?;
     m.add_function(wrap_pyfunction!(drawfile, m)?)?;
