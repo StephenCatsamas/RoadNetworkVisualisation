@@ -3,9 +3,11 @@ import pyvips
 import csv
 import math
 import time
+import re
 
 
 from .args import *
+from .mapUtil import *
 from . import maptoolslib
 
 class Line():
@@ -40,14 +42,13 @@ def draw(file, args : ArgsContainer):
         if not os.path.exists(fout):
             os.makedirs(fout)
 
-        Cia = file.find("_")
-        Cib = file.find("_", Cia+1)
-        Cic = file.find(".", Cib)
-        
-        flat = int(file[Cia+1:Cib])/args.blk
-        flon = int(file[Cib+1:Cic])/args.blk      
+        xtile,ytile,zoom = [int(num) for num in re.findall(r'\d+', file)]
 
-        view = View((flat,flat-(args.stp/args.blk),flon+(args.stp/args.blk),flon),args.res)
+        
+        north,west = num2deg(xtile,ytile,zoom)    
+        south,east = num2deg(xtile+1,ytile+1,zoom)    
+
+        view = View((north,south,east,west),args.res)
         tik = time.time()
         maptoolslib.drawfile(fcur,view,fout, args.seg_width)
         tok = time.time()

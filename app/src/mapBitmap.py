@@ -1,18 +1,16 @@
 import os
+import re
+
 import pyvips
 
+from .args import *
 
-def row_major(file):
-    Cia = file.find("_")
-    Cib = file.find("_", Cia+1)
-    Cic = file.find(".", Cib)
-    
-    flat = float(file[Cia+1:Cib])
-    flon = float(file[Cib+1:Cic])
+def row_major(file: str):
+    xtile,ytile,zoom = [int(num) for num in re.findall(r'\d+', file)]
 
-    return -flat,flon
+    return ytile,xtile
 
-def grey(file, args):
+def grey(file : str, args: ArgsContainer):
     fcur = args.mapGreyInPath+'\\'+file
     fout = args.mapGreyOutPath+'\\'+file
        
@@ -24,15 +22,19 @@ def grey(file, args):
     im_grey = im_background.composite2(im_forground, 'over')
     im_grey.write_to_file(fout)
 
-def concat(args):
+def concat(args : ArgsContainer):
 
-    nx = len(range(args.W,args.E,args.stp))
+    xs = []
+    for file in os.listdir(args.mapConcatInPath):
+        xtile,ytile,zoom = [int(num) for num in re.findall(r'\d+', file)]
+        xs.append(xtile)
+
+    nx = max(xs) - min(xs) + 1
 
     print("Concatinating")
     
-    for root,dirs,files in os.walk(args.mapConcatInPath):
-       
-       files.sort(key = row_major)
+    files = os.listdir(args.mapConcatInPath)
+    files.sort(key = row_major)
        
     #flush cache to reload images from file
     cs = pyvips.voperation.cache_get_max()
