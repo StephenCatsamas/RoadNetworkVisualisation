@@ -104,7 +104,7 @@ pub async fn setup() -> Graphics {
         dx12_shader_compiler: Default::default(),
         gles_minor_version: Default::default(),
     });
-    println!("instance: {}", tik.elapsed().as_millis());
+    //println!("instance: {}", tik.elapsed().as_millis());
     // // // // // // // make new adapter
     tik = Instant::now();
     let adapter = instance
@@ -116,9 +116,9 @@ pub async fn setup() -> Graphics {
         .await
         .unwrap();
 
-    println!("make new adapter: {}", tik.elapsed().as_millis());
+    //println!("make new adapter: {}", tik.elapsed().as_millis());
     let adapter_name = adapter.get_info().name;
-    // println!("Selected adapter: {}", adapter_name);
+    // //println!("Selected adapter: {}", adapter_name);
 
     // // // // // // // make new device and queue
     tik = Instant::now();
@@ -126,7 +126,7 @@ pub async fn setup() -> Graphics {
         .request_device(&Default::default(), None)
         .await
         .unwrap();
-    println!("make new device and queue: {}", tik.elapsed().as_millis());
+    //println!("make new device and queue: {}", tik.elapsed().as_millis());
     // // // // // // // set vertex buffer layout
     tik = Instant::now();
     let vertex_buffer_layout = wgpu::VertexBufferLayout {
@@ -146,7 +146,7 @@ pub async fn setup() -> Graphics {
             },
         ],
     };
-    println!("set vertex buffer layout: {}", tik.elapsed().as_millis());
+    //println!("set vertex buffer layout: {}", tik.elapsed().as_millis());
     // // // // // // set camera buffer
     tik = Instant::now();
     let camera_uniform = CameraUniform { campos: [0.0, 0.0] };
@@ -180,7 +180,7 @@ pub async fn setup() -> Graphics {
         }],
         label: Some("camera_bind_group"),
     });
-    println!("set camera buffer: {}", tik.elapsed().as_millis());
+    //println!("set camera buffer: {}", tik.elapsed().as_millis());
     // // // // // // // output texture setup
     tik = Instant::now();
     let tex_size = TEXSIZE as u32;
@@ -215,7 +215,7 @@ pub async fn setup() -> Graphics {
     let texture_msaa = device.create_texture(&tex_desc_msaa);
     let texture = device.create_texture(&tex_desc);
 
-    println!("output texture setup: {}", tik.elapsed().as_millis());
+    //println!("output texture setup: {}", tik.elapsed().as_millis());
     // // // // // // make output buffer
     tik = Instant::now();
     let u32_size = std::mem::size_of::<u32>() as u32;
@@ -230,7 +230,7 @@ pub async fn setup() -> Graphics {
     };
     let output_buffer = device.create_buffer(&output_buffer_desc);
     
-    println!("make output buffer: {}", tik.elapsed().as_millis());
+    //println!("make output buffer: {}", tik.elapsed().as_millis());
     // // // // // // setup rendering pipeline
     tik = Instant::now();
     let render_pipeline = make_render_pipeline(
@@ -254,7 +254,7 @@ pub async fn setup() -> Graphics {
         cbg: camera_bind_group,
         cbff: camera_buffer,
     };
-    println!("setup rendering pipeline: {}", tik.elapsed().as_millis());
+    //println!("setup rendering pipeline: {}", tik.elapsed().as_millis());
     return graphics;
 }
 
@@ -552,7 +552,8 @@ mod tests {
 
         // Print information about each adapter
         for adapter in adapters {
-            println!("Adapter: {}", adapter.get_info().name);
+            //
+    println!("Adapter: {}", adapter.get_info().name);
         }
     }
 }

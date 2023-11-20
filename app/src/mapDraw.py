@@ -25,7 +25,9 @@ def compatify(p,view):
     y = (2*(p[1]-lat))/range -1
     # print(x,y)
     return (x, y)
-    
+
+def init():
+    maptoolslib.graphics_init()
 
 def draw(file, args):
         

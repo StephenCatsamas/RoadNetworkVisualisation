@@ -1,10 +1,16 @@
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
+use std::time::Instant;
+
+mod draw;
 mod renderer;
 mod seg;
-mod draw;
 
 use draw::View;
+use renderer::Graphics;
+
+static mut GRAPHICS: Option<Graphics> = None;
 
 #[pyfunction]
 fn rust_test(_py: Python, a: i32) -> PyResult<u64> {
@@ -37,34 +43,46 @@ impl View {
     }
 }
 
+#[pyfunction]
+fn graphics_init(py: Python) -> PyResult<u64> {
+    unsafe {
+        let tik = Instant::now();
+        if GRAPHICS.is_none() {
+            GRAPHICS = Some(pollster::block_on(renderer::setup()));
+        }
+        println!("initialised graphics: {}", tik.elapsed().as_millis());
+    }
+    return Ok(0);
+}
 
 #[pyfunction]
-fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> PyResult<u64> {
-    
+fn drawfile(py: Python, fin: &str, view: PyObject, fout: &str, width: f32) -> PyResult<u64> {
     let view = View::frompy(py, view);
-    let lines = draw::linesfromhex(file, width);
-    let mut graphics = pollster::block_on(renderer::setup());
+    let lines = draw::linesfromhex(fin, width);
 
-    draw::drawlineset(&mut graphics, lines, view, fp);
-
-    return Ok(1);
+    unsafe {
+        let mut graphics = GRAPHICS
+            .take()
+            .ok_or_else(|| PyValueError::new_err("GRAPHICS is None"))?;
+        draw::drawlineset(&mut graphics, lines, view, fout);
+        GRAPHICS = Some(graphics);
+    }
+    return Ok(0);
 }
 
 #[pyfunction]
 fn segfile(py: Python, fin: &str, fout: &str) -> PyResult<u64> {
-    
     let segments = seg::load_map(fin);
     let lines = seg::format(segments);
     seg::tofile(fout, lines);
 
-    return Ok(1);
+    return Ok(0);
 }
-
-
 
 #[pymodule]
 fn maptoolslib(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rust_test, m)?)?;
+    m.add_function(wrap_pyfunction!(graphics_init, m)?)?;
     m.add_function(wrap_pyfunction!(segfile, m)?)?;
     m.add_function(wrap_pyfunction!(drawfile, m)?)?;
     Ok(())
