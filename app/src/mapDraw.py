@@ -4,6 +4,8 @@ import csv
 import math
 import time
 
+
+from .args import *
 from . import maptoolslib
 
 class Line():
@@ -29,7 +31,7 @@ def compatify(p,view):
 def init():
     maptoolslib.graphics_init()
 
-def draw(file, args):
+def draw(file, args : ArgsContainer):
         
         fcur = args.mapDrawInPath+'\\'+file
         fname = file[:-4]

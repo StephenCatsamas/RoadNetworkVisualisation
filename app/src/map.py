@@ -24,7 +24,8 @@ def run(args):
             print()
             os.makedirs(folder)
 
-    mapPull.pull(args)
+    # mapPull.pull(args)
+    mapPull.pull_tiles(args)
     
     if args.do_cull:
         for root,dirs,files in os.walk(args.mapStreetInPath):
