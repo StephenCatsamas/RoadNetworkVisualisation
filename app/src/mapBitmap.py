@@ -6,7 +6,7 @@ import pyvips
 from .args import *
 
 def row_major(file: str):
-    xtile,ytile,zoom = [int(num) for num in re.findall(r'\d+', file)]
+    zoom,xtile,ytile = [int(num) for num in re.findall(r'\d+', file)]
 
     return ytile,xtile
 
@@ -26,7 +26,7 @@ def concat(args : ArgsContainer):
 
     xs = []
     for file in os.listdir(args.mapConcatInPath):
-        xtile,ytile,zoom = [int(num) for num in re.findall(r'\d+', file)]
+        zoom,xtile,ytile = [int(num) for num in re.findall(r'\d+', file)]
         xs.append(xtile)
 
     nx = max(xs) - min(xs) + 1

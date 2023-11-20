@@ -1,4 +1,14 @@
 import math
+from dataclasses import astuple, dataclass
+
+@dataclass
+class Tile:
+    z: int
+    x: int
+    y: int
+
+    def __iter__(self):
+        return iter(astuple(self))
 
 def sectan(z):
     v = (1/math.cos(z)) + math.tan(z)
@@ -41,7 +51,8 @@ def deg2num(lat_deg, lon_deg, zoom):
   ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
   return (xtile, ytile)
 
-def num2deg(xtile, ytile, zoom):
+def num2deg(tile : Tile):
+  zoom,xtile,ytile = tile
   n = 2.0 ** zoom
   lon_deg = xtile / n * 360.0 - 180.0
   lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))

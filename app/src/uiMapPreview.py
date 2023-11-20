@@ -320,9 +320,9 @@ class SlippyMap():
         self.map = pyvips.Image.arrayjoin(image_tiles, across = xTiles)
         
         zoom,x,y = tiles[0]
-        N,W = num2deg(x,y,zoom)
+        N,W = num2deg(Tile(zoom,x,y))
         zoom,x,y = tiles[-1]
-        S,E = num2deg(x+1, y+1, zoom)
+        S,E = num2deg(Tile(zoom,x+1, y+1))
         
         self.map_bounds = (N,S,E,W)
        
