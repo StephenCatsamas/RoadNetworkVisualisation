@@ -7,7 +7,7 @@ mod renderer;
 mod seg;
 mod draw;
 
-use renderer::Line;
+use renderer::{Line, Graphics};
 use draw::View;
 
 py_module_initializer!(maptoolslib, |py, m| {
@@ -93,7 +93,6 @@ impl Line {
         return line;
     }
 }
-
 
 fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> PyResult<u64> {
     
