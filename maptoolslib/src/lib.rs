@@ -1,38 +1,12 @@
-#[macro_use]
-extern crate cpython;
-
-use cpython::{ObjectProtocol, PyObject, PyResult, Python};
+use pyo3::prelude::*;
 
 mod renderer;
 mod seg;
 mod draw;
 
-use renderer::{Line, Graphics};
 use draw::View;
 
-py_module_initializer!(maptoolslib, |py, m| {
-    m.add(
-        py,
-        "__doc__",
-        concat!(
-            "rust lib built at: ",
-            include!(concat!(env!("OUT_DIR"), "/timestamp.txt"))
-        ),
-    )?;
-    m.add(py, "rust_test", py_fn!(py, rust_test(a: i32)))?;
-    m.add(
-        py,
-        "segfile",
-        py_fn!(py, segfile(fin: &str, fout: &str)),
-    )?;
-    m.add(
-        py,
-        "drawfile",
-        py_fn!(py, drawfile(file: &str, view: PyObject, fp: &str, width : f32)),
-    )?;
-    Ok(())
-});
-
+#[pyfunction]
 fn rust_test(_py: Python, a: i32) -> PyResult<u64> {
     println!("{}", a);
 
@@ -63,37 +37,8 @@ impl View {
     }
 }
 
-impl Line {
-    fn frompy(py: Python, line: PyObject) -> Line {
-        let t = array2(
-            line.getattr(py, "to")
-                .unwrap()
-                .extract::<(f32, f32)>(py)
-                .unwrap(),
-        );
-        let f = array2(
-            line.getattr(py, "fm")
-                .unwrap()
-                .extract::<(f32, f32)>(py)
-                .unwrap(),
-        );
-        let c = array3(
-            line.getattr(py, "colour")
-                .unwrap()
-                .extract::<(f32, f32, f32)>(py)
-                .unwrap(),
-        );
-        let w = line.getattr(py, "width").unwrap().extract(py).unwrap();
-        let line = Line {
-            to: t,
-            from: f,
-            colour: c,
-            width: w,
-        };
-        return line;
-    }
-}
 
+#[pyfunction]
 fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> PyResult<u64> {
     
     let view = View::frompy(py, view);
@@ -105,6 +50,7 @@ fn drawfile(py: Python, file : &str, view: PyObject, fp: &str, width : f32) -> P
     return Ok(1);
 }
 
+#[pyfunction]
 fn segfile(py: Python, fin: &str, fout: &str) -> PyResult<u64> {
     
     let segments = seg::load_map(fin);
@@ -114,3 +60,12 @@ fn segfile(py: Python, fin: &str, fout: &str) -> PyResult<u64> {
     return Ok(1);
 }
 
+
+
+#[pymodule]
+fn maptoolslib(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(rust_test, m)?)?;
+    m.add_function(wrap_pyfunction!(segfile, m)?)?;
+    m.add_function(wrap_pyfunction!(drawfile, m)?)?;
+    Ok(())
+}
