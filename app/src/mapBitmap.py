@@ -1,18 +1,17 @@
 import os
+import re
+
 import pyvips
 
+from .args import *
+from .mapUtil import *
 
-def row_major(file):
-    Cia = file.find("_")
-    Cib = file.find("_", Cia+1)
-    Cic = file.find(".", Cib)
-    
-    flat = float(file[Cia+1:Cib])
-    flon = float(file[Cib+1:Cic])
+def row_major(file: str):
+    zoom,xtile,ytile = [int(num) for num in re.findall(r'\d+', file)]
 
-    return -flat,flon
+    return ytile,xtile
 
-def grey(file, args):
+def grey(file : str, args: ArgsContainer):
     fcur = args.mapGreyInPath+'\\'+file
     fout = args.mapGreyOutPath+'\\'+file
        
@@ -24,15 +23,19 @@ def grey(file, args):
     im_grey = im_background.composite2(im_forground, 'over')
     im_grey.write_to_file(fout)
 
-def concat(args):
+def concat(args : ArgsContainer):
 
-    nx = len(range(args.W,args.E,args.stp))
+    xs = []
+    for file in os.listdir(args.mapConcatInPath):
+        zoom,xtile,ytile = [int(num) for num in re.findall(r'\d+', file)]
+        xs.append(xtile)
+
+    nx = max(xs) - min(xs) + 1
 
     print("Concatinating")
     
-    for root,dirs,files in os.walk(args.mapConcatInPath):
-       
-       files.sort(key = row_major)
+    files = os.listdir(args.mapConcatInPath)
+    files.sort(key = row_major)
        
     #flush cache to reload images from file
     cs = pyvips.voperation.cache_get_max()
@@ -51,3 +54,31 @@ def concat(args):
         outimg = outimg.join(image_row, 'vertical')
     
     outimg.write_to_file(args.mapConcatOutPath)
+
+
+def crop(args : ArgsContainer):
+
+    tiles = []
+    for file in os.listdir(args.mapConcatInPath):
+        zoom,xtile,ytile = [int(num) for num in re.findall(r'\d+', file)]
+        tiles.append(Tile(zoom,xtile,ytile))
+
+    xs = [t.x for t in tiles]
+    ys = [t.x for t in tiles]
+
+
+
+    ref = num2deg(Tile(zoom,min(xs),min(ys)))
+
+    nwcorner = (args.Nf, args.Wf)
+    secorner = (args.Sf, args.Ef)
+
+    top, left = deg2pix(nwcorner, ref, ZOOM)
+    bottom, right = deg2pix(secorner, ref, ZOOM)
+
+    map = pyvips.Image.new_from_file(args.mapConcatOutPath)
+
+    map = map.crop(left, top, right-left, top-bottom)
+
+    map.write_to_file(args.mapConcatOutPath)
+

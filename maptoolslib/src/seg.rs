@@ -72,6 +72,26 @@ pub fn format(segs : (Vec::<Way>,HashMap<u64, [f32;2]>)) -> Vec<Line>{
 
 }
 
+
+fn hsv2rgb(hsv: [f32;3]) -> [f32;3] {
+    let [hu,s,v] = hsv;
+    let h = hu * 360.0; // Scale hue to [0, 360]
+    let c = v * s;
+    let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
+    let m = v - c;
+
+    let (r, g, b) = match h {
+        h if h < 60.0 => (c, x, 0.0),
+        h if h < 120.0 => (x, c, 0.0),
+        h if h < 180.0 => (0.0, c, x),
+        h if h < 240.0 => (0.0, x, c),
+        h if h < 300.0 => (x, 0.0, c),
+        _ => (c, 0.0, x),
+    };
+
+    return [r + m, g + m, b + m]
+}
+
 #[allow(unused_variables)]
 fn colourfunc(to : [f32;2], from : [f32;2]) -> [f32;3]{
     let dlat = to[0] - from[0];
@@ -80,12 +100,15 @@ fn colourfunc(to : [f32;2], from : [f32;2]) -> [f32;3]{
     let x = (to[0].to_radians()).cos() * dlon;
     let y = dlat;
     
-    let ang = y.atan2(x);
-    
+    let ang = y.atan2(x) + 0.5*PI2;
+
     let h = (4.0*ang/PI2) % 1.0;
     let s = 0.6;
     let v = 1.0;
-    return [h,s,v]
+    // print!("{:?} {:?}\n", ang, h);
+    // panic!();
+
+    return hsv2rgb([h,s,v])
 }
 
 #[allow(unused_variables)]

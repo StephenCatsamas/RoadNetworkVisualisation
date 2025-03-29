@@ -2,6 +2,8 @@ import math
 import os
 import csv
 
+ZOOM = 11
+
 class ArgsContainer():
 
     def __init__(self,file = 'lstarg.cfg'):
@@ -23,7 +25,6 @@ class ArgsContainer():
         self.dict2name()       
         
         ##############################################################################
-        self.blk = 1000
 
         self.render_folders = list()
 
@@ -49,14 +50,6 @@ class ArgsContainer():
         
     
     def save_args(self,file = 'lstarg.cfg'):
-        self.stp = int(round(self.tile_size,3)*self.blk)
-
-        self.N = int(math.floor(self.blk*round(self.Nf,3)))
-        self.S = int(math.floor(self.blk*round(self.Sf,3)))
-        self.E = int(math.floor(self.blk*round(self.Ef,3)))
-        self.W = int(math.floor(self.blk*round(self.Wf,3)))
-    
-    
         self.name2dict()
     
         dirname = os.path.dirname(__file__)
@@ -78,8 +71,6 @@ class ArgsContainer():
         self.Sf =  float(self.filedict['Sf'])
         self.Ef =  float(self.filedict['Ef'])
         self.Wf =  float(self.filedict['Wf'])
-
-        self.tile_size = float(self.filedict['tile_size'])
 
         self.res = float(self.filedict['res'])
 
@@ -119,7 +110,6 @@ class ArgsContainer():
         self.filedict['Wf'] = str(self.Wf)
         
         
-        self.filedict['tile_size'] = str(self.tile_size)
         self.filedict['res'] = str(self.res)
         self.filedict['seg_width'] = str(self.seg_width)
         self.filedict['threads'] = str(self.threads)

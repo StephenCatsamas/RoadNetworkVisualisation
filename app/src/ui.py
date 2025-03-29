@@ -415,7 +415,6 @@ class MainForm ( wx.Frame ):
         self.south.SetValue(self.args.Sf)
         self.east.SetValue(self.args.Ef)
         self.west.SetValue(self.args.Wf)
-        self.tile_res.SetValue(self.args.tile_size)
         self.image_res.SetValue(self.args.res)
         self.draw_width.SetValue(self.args.seg_width)
         self.flush_cache_widg.SetValue(self.args.flush_map_cache)
@@ -429,8 +428,7 @@ class MainForm ( wx.Frame ):
         delta_lon_str = str(round(self.args.Ef - self.args.Wf,3))
         self.lon_delta_label.SetLabelMarkup("Longitude Δ: " + delta_lon_str + " deg")
         
-        n_tiles_str = str(int(math.ceil((self.args.Nf-self.args.Sf)/self.args.tile_size * math.ceil(self.args.Ef-self.args.Wf)/self.args.tile_size)))
-        self.n_tiles_label.SetLabel("Tiles: " + n_tiles_str)
+        self.n_tiles_label.SetLabel("Tiles: TODO")
         
         self.map_view.slippy.selection_bounds = (self.args.Nf,self.args.Sf,self.args.Ef,self.args.Wf)
         

@@ -3,7 +3,11 @@ import pyvips
 import csv
 import math
 import time
+import re
 
+
+from .args import *
+from .mapUtil import *
 from . import maptoolslib
 
 class Line():
@@ -29,23 +33,22 @@ def compatify(p,view):
 def init():
     maptoolslib.graphics_init()
 
-def draw(file, args):
+def draw(file, args : ArgsContainer):
         
         fcur = args.mapDrawInPath+'\\'+file
         fname = file[:-4]
         fout = args.mapDrawOutPath+'\\'+ fname + '\\'
-        # make output directory
+         # make output directory
         if not os.path.exists(fout):
             os.makedirs(fout)
 
-        Cia = file.find("_")
-        Cib = file.find("_", Cia+1)
-        Cic = file.find(".", Cib)
-        
-        flat = int(file[Cia+1:Cib])/args.blk
-        flon = int(file[Cib+1:Cic])/args.blk      
+        zoom,xtile,ytile = [int(num) for num in re.findall(r'\d+', file)]
 
-        view = View((flat,flat-(args.stp/args.blk),flon+(args.stp/args.blk),flon),args.res)
+        
+        north,west = num2deg(Tile(zoom,xtile,ytile))    
+        south,east = num2deg(Tile(zoom,xtile+1,ytile+1))    
+
+        view = View((north,south,east,west),args.res)
         tik = time.time()
         maptoolslib.drawfile(fcur,view,fout, args.seg_width)
         tok = time.time()
@@ -62,7 +65,6 @@ def rust_draw_concat(view,fout,fname):
     for root,dirs,files in os.walk(fout):
         
         files.sort(key = row_major)
-        # print(files)
         nx = get_xtiles(files)
 
     images = [pyvips.Image.new_from_file(fout+file) for file in files]
@@ -106,21 +108,16 @@ def secint(a,b):
     return (math.log(up) - math.log(down))
 
 
-def get_xtiles(files):
-    ords = [get_tile(file) for file in files]
-    xords = [x for x,y in ords]
-    return max(xords)-min(xords)+1
+def get_xtiles(files : [str]) -> int:
+    xs = [[int(num) for num in re.findall(r'\d+', file)][1] for file in files]
+    return max(xs)-min(xs)+1
 
-def get_tile(file): 
-    Cia = file.find("[")
-    Cib = file.find(",", Cia+1)
-    Cic = file.find("]", Cib)
+def get_surface(file : str) -> (int,int): 
+    xtile,ytile = [int(num) for num in re.findall(r'\d+', file)]
     
-    xtile = float(file[Cia+1:Cib])
-    ytile = float(file[Cib+1:Cic])
-    return(xtile,ytile)
+    return (xtile,ytile)
 
-def row_major(file):
-    x,y = get_tile(file)
-    return (-y,x)
+def row_major(file : str) -> (int,int):
+    x,y = get_surface(file)
+    return (y,x)
 

@@ -1,17 +1,20 @@
+import os
+import sys
+import time
+from functools import partial
+from multiprocessing import Pool
+
+
+from .args import *
 from . import mapPull
 from . import mapStreet
 from . import mapSeg
 from . import mapDraw
 from . import mapBitmap
-from functools import partial
-
-import os
-import sys
-import time
-from multiprocessing import Pool
 
 
-def run(args): 
+
+def run(args: ArgsContainer): 
     if args.flush_map_cache:
         for folder in args.render_folders:
             for root,dirs,files in os.walk(folder):
@@ -24,7 +27,8 @@ def run(args):
             print()
             os.makedirs(folder)
 
-    mapPull.pull(args)
+    # mapPull.pull(args)
+    mapPull.pull_tiles(args)
     
     if args.do_cull:
         for root,dirs,files in os.walk(args.mapStreetInPath):
@@ -51,6 +55,8 @@ def run(args):
     p.join()
      
     mapBitmap.concat(args)
+
+    mapBitmap.crop(args)
     print('Finished')
  
 if __name__ == '__main__':
