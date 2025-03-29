@@ -100,7 +100,7 @@ fn colourfunc(to : [f32;2], from : [f32;2]) -> [f32;3]{
     let x = (to[0].to_radians()).cos() * dlon;
     let y = dlat;
     
-    let ang = y.atan2(x) + 0.5*PI2;
+    let ang = - y.atan2(x) + 0.5*PI2;
 
     let h = (4.0*ang/PI2) % 1.0;
     let s = 0.6;
