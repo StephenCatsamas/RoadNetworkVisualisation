@@ -73,8 +73,8 @@ def crop(args : ArgsContainer):
     nwcorner = (args.Nf, args.Wf)
     secorner = (args.Sf, args.Ef)
 
-    top, left = deg2pix(nwcorner, ref, ZOOM) 
-    bottom, right = deg2pix(secorner, ref, ZOOM) 
+    top, left = deg2pix(nwcorner, ref, ZOOM)
+    bottom, right = deg2pix(secorner, ref, ZOOM)
 
     map = pyvips.Image.new_from_file(args.mapConcatOutPath)
 
